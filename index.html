@@ -380,8 +380,8 @@ if (typeof module !== 'undefined') module.exports = AN;
       sTime: 'Tiempo', sStreak: 'Racha de días', sSolved: 'Resueltos',
       shareBtn: 'Compartir', copy: 'Copiar', copied: 'Copiado', copyFail: 'Selecciona el texto y cópialo',
       invite: url => `¿Te atreves? Juega gratis: ${url}`,
-      shareWin: (n, lvl, t, hearts, h, perfect, s) => `Ringoku nº ${n} · ${lvl}\n✅ ${t} · ${hearts} · 💡${h}${perfect ? ' · ✨ Perfecto' : ''}` + (s > 1 ? `\nRacha: ${s} días` : ''),
-      shareLost: (n, lvl) => `Ringoku nº ${n} · ${lvl}\n❌ Sin vidas`,
+      shareWin: (n, lvl, t, left, h, perfect, s) => `Ringoku nº ${n} · ${lvl}\n✅ Resuelto en ${t} · vidas ${left}/3 · pistas ${h}${perfect ? ' · ¡Perfecto!' : ''}` + (s > 1 ? `\nRacha: ${s} días` : ''),
+      shareLost: (n, lvl) => `Ringoku nº ${n} · ${lvl}\n❌ No lo he conseguido: me quedé sin vidas`,
       notes: 'Notas', on: 'sí', off: 'no', del: 'Borrar notas',
       hintBtn: n => `Pista (${n})`,
       filled: 'Este trozo ya está completo. En azul, los trozos que toca.',
@@ -409,8 +409,8 @@ if (typeof module !== 'undefined') module.exports = AN;
       sTime: 'Time', sStreak: 'Day streak', sSolved: 'Solved',
       shareBtn: 'Share', copy: 'Copy', copied: 'Copied', copyFail: 'Select the text and copy it',
       invite: url => `Can you beat it? Play free: ${url}`,
-      shareWin: (n, lvl, t, hearts, h, perfect, s) => `Ringoku #${n} · ${lvl}\n✅ ${t} · ${hearts} · 💡${h}${perfect ? ' · ✨ Perfect' : ''}` + (s > 1 ? `\nStreak: ${s} days` : ''),
-      shareLost: (n, lvl) => `Ringoku #${n} · ${lvl}\n❌ Out of lives`,
+      shareWin: (n, lvl, t, left, h, perfect, s) => `Ringoku #${n} · ${lvl}\n✅ Solved in ${t} · lives ${left}/3 · hints ${h}${perfect ? ' · Perfect!' : ''}` + (s > 1 ? `\nStreak: ${s} days` : ''),
+      shareLost: (n, lvl) => `Ringoku #${n} · ${lvl}\n❌ I didn’t make it: out of lives`,
       notes: 'Notes', on: 'on', off: 'off', del: 'Clear notes',
       hintBtn: n => `Hint (${n})`,
       filled: 'This piece is already done. The pieces it touches are in blue.',
@@ -522,9 +522,7 @@ if (typeof module !== 'undefined') module.exports = AN;
     } else {
       const perfect = st.mistakes === 0 && st.hints === 0;
       $('rtitle').textContent = !st.firstEnd ? t.already : perfect ? t.perfect : t.solved;
-      const left = LIVES - st.mistakes;
-      const hearts = '❤️'.repeat(left) + '🤍'.repeat(st.mistakes);
-      $('shareText').textContent = t.shareWin(st.p.number, lvl, fmt(st.ms), hearts, st.hints, perfect, s);
+      $('shareText').textContent = t.shareWin(st.p.number, lvl, fmt(st.ms), LIVES - st.mistakes, st.hints, perfect, s);
     }
     updateShare();
   }

@@ -38,4 +38,4 @@ Cambiar el generador (`src/anillos-core.js`) cambia los puzzles de todos los dí
 
 ## Publicar
 
-En GitHub: **Settings → Pages → Build and deployment → Source: Deploy from a branch**, rama `main`, carpeta `/ (root)`. La web queda en `https://franmira.github.io/PasatiempoCircular/`.
+La web se publica automáticamente con GitHub Pages desde la rama `main` (carpeta raíz) en **https://playringoku.github.io**. Si algún día deja de publicarse, revisa **Settings → Pages → Build and deployment → Source: Deploy from a branch**, rama `main`, carpeta `/ (root)`.

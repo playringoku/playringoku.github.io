@@ -120,9 +120,7 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
     <div class="row">
       <button id="notes" aria-pressed="false"></button>
       <button id="hintbtn"></button>
-      <button id="look" aria-pressed="false"></button>
     </div>
-    <p class="hint" id="lookhint" hidden data-t="lookhint"></p>
     <div class="status" id="status" role="status" aria-live="polite"></div>
   </div>
 </div>
@@ -148,7 +146,7 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan números consecutivos: un 4 no puede tocar ni un 3 ni un 5.',
       r3: 'Tienes 3 vidas: cada número equivocado resta una. Las notas no cuentan.',
-      rhelp: 'Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro. Si dudas, activa Ver vecinos. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir (3 por puzzle). Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
+      rhelp: 'Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro. Al tocar un trozo se resaltan en azul los 6 que toca. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir (3 por puzzle). Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
       easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil',
@@ -159,9 +157,9 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
       copy: 'Copiar resultado', copied: 'Copiado', copyFail: 'Selecciona el texto y cópialo',
       shareWin: (n, lvl, t, hearts, h, perfect, s) => `Ringoku nº ${n} · ${lvl}\n✅ ${t} · ${hearts} · 💡${h}${perfect ? ' · ✨ Perfecto' : ''}` + (s > 1 ? `\nRacha: ${s} días` : ''),
       shareLost: (n, lvl) => `Ringoku nº ${n} · ${lvl}\n❌ Sin vidas`,
-      notes: 'Notas', look: 'Ver vecinos', on: 'sí', off: 'no', del: 'Borrar notas',
+      notes: 'Notas', on: 'sí', off: 'no', del: 'Borrar notas',
       hintBtn: n => `Pista (${n})`,
-      lookhint: 'Modo ayuda: toca un trozo para ver en azul los 6 que toca. Desactívalo para seguir jugando.',
+      filled: 'Este trozo ya está completo. En azul, los trozos que toca.',
       start: 'Toca un trozo vacío y elige un número.', resume: 'Seguimos donde lo dejaste.',
       pick: 'Elige un número para ese trozo.', noteMode: 'Modo notas: toca números para apuntar o quitar posibilidades.',
       selectFirst: 'Primero toca un trozo vacío.', good: 'Bien.',
@@ -176,7 +174,7 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold consecutive numbers: a 4 can’t touch a 3 or a 5.',
       r3: 'You have 3 lives: each wrong number costs one. Notes don’t count.',
-      rhelp: 'Each piece touches 6 others: 2 beside it, 2 in the ring outside and 2 in the ring inside. If in doubt, turn on Show neighbours. Use Notes to pencil in candidates. If you get stuck, Hint shows you the next piece that can be deduced (3 per puzzle). A new puzzle every day: easy on Monday and harder each day until Sunday.',
+      rhelp: 'Each piece touches 6 others: 2 beside it, 2 in the ring outside and 2 in the ring inside. Tapping a piece highlights the 6 pieces it touches in blue. Use Notes to pencil in candidates. If you get stuck, Hint shows you the next piece that can be deduced (3 per puzzle). A new puzzle every day: easy on Monday and harder each day until Sunday.',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
       easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',
@@ -187,9 +185,9 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
       copy: 'Copy result', copied: 'Copied', copyFail: 'Select the text and copy it',
       shareWin: (n, lvl, t, hearts, h, perfect, s) => `Ringoku #${n} · ${lvl}\n✅ ${t} · ${hearts} · 💡${h}${perfect ? ' · ✨ Perfect' : ''}` + (s > 1 ? `\nStreak: ${s} days` : ''),
       shareLost: (n, lvl) => `Ringoku #${n} · ${lvl}\n❌ Out of lives`,
-      notes: 'Notes', look: 'Show neighbours', on: 'on', off: 'off', del: 'Clear notes',
+      notes: 'Notes', on: 'on', off: 'off', del: 'Clear notes',
       hintBtn: n => `Hint (${n})`,
-      lookhint: 'Help mode: tap a piece to see the 6 pieces it touches in blue. Turn it off to keep playing.',
+      filled: 'This piece is already done. The pieces it touches are in blue.',
       start: 'Tap an empty piece and pick a number.', resume: 'Picking up where you left off.',
       pick: 'Pick a number for that piece.', noteMode: 'Notes mode: tap numbers to add or remove candidates.',
       selectFirst: 'Tap an empty piece first.', good: 'Good.',
@@ -207,7 +205,7 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
   }
   const T = () => I18N[lang];
 
-  const st = { key: TODAY, p: null, val: {}, notes: {}, sel: null, noteMode: false, look: false, focus: null,
+  const st = { key: TODAY, p: null, val: {}, notes: {}, sel: null, noteMode: false,
     solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, flash: null, glow: null, ms: 0, since: Date.now(), msg: ['start'] };
 
   const cid = (k, i) => k * N + ((i % N) + N) % N;
@@ -253,7 +251,7 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
 
   function draw() {
     const p = st.p, giv = new Set(p.giv), t = T();
-    const hiNb = new Set(st.look && st.focus !== null ? NB[st.focus] : []);
+    const hiNb = new Set(st.sel !== null && !over() ? NB[st.sel] : []);
     svg.textContent = '';
     for (let k = 0; k < K; k++) {
       const r1 = R - k * WD, r0 = r1 - WD;
@@ -262,14 +260,13 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
         const a = pt(r1, th - 22.5), b = pt(r1, th + 22.5), c = pt(r0, th + 22.5), d = pt(r0, th - 22.5);
         const given = giv.has(id), placed = st.val[id] !== undefined;
         let fill = k % 2 ? 'var(--tint)' : 'var(--paper)';
-        if (st.look && st.focus === id) fill = 'var(--hi)';
-        else if (hiNb.has(id)) fill = 'var(--nb)';
-        else if (st.flash === id) fill = 'var(--badbg)';
+        if (st.flash === id) fill = 'var(--badbg)';
         else if (st.glow === id) fill = 'var(--hi)';
+        else if (hiNb.has(id)) fill = 'var(--nb)';
         const g = el('g', { 'data-id': id }, svg);
-        if ((!given && !placed && !over()) || st.look) { g.setAttribute('class', 'pc'); g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button'); }
+        if (!over()) { g.setAttribute('class', 'pc'); g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button'); }
         g.setAttribute('aria-label', given ? t.fixed(p.sol[id]) : placed ? t.yours(st.val[id]) : t.empty);
-        const isSel = !st.look && st.sel === id;
+        const isSel = st.sel === id && !over();
         el('path', { d: `M${a[0]} ${a[1]} A${r1} ${r1} 0 0 1 ${b[0]} ${b[1]} L${c[0]} ${c[1]} A${r0} ${r0} 0 0 0 ${d[0]} ${d[1]} Z`,
           fill, stroke: st.flash === id ? 'var(--bad)' : isSel ? 'var(--accent)' : 'var(--ink)', 'stroke-width': isSel || st.flash === id ? 4 : 1.2 }, g);
         const m = pt((r0 + r1) / 2, th);
@@ -319,18 +316,19 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
   }
 
   function tap(id) {
-    if (st.look) { st.focus = st.focus === id ? null : id; draw(); return; }
-    if (over() || st.p.giv.includes(id) || st.val[id] !== undefined) return;
-    st.sel = id; draw();
-    say(st.noteMode ? 'noteMode' : 'pick');
+    if (over()) return;
+    st.sel = st.sel === id ? null : id; draw();
+    if (st.sel === null) return;
+    if (st.p.giv.includes(id) || st.val[id] !== undefined) say('filled');
+    else say(st.noteMode ? 'noteMode' : 'pick');
   }
   svg.addEventListener('click', e => { const g = e.target.closest('.pc'); if (g) tap(+g.dataset.id); });
   svg.addEventListener('keydown', e => {
     const g = e.target.closest && e.target.closest('.pc'); if (!g) return;
     const id = +g.dataset.id;
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(id); }
-    else if (/^[1-8]$/.test(e.key) && !st.look) { st.sel = id; enter(+e.key); }
-    else if ((e.key === 'Backspace' || e.key === 'Delete') && !st.look) { st.sel = id; enter(0); }
+    else if (/^[1-8]$/.test(e.key)) { st.sel = id; enter(+e.key); }
+    else if (e.key === 'Backspace' || e.key === 'Delete') { st.sel = id; enter(0); }
     else return;
     const f = svg.querySelector(`[data-id="${id}"]`); if (f) f.focus({ preventScroll: true });
   });
@@ -349,9 +347,10 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
   }
   let flashTimer = null;
   function enter(n) {
-    if (over() || st.look) return;
+    if (over()) return;
     if (st.sel === null) { say('selectFirst', null, 'bad'); return; }
     const id = st.sel;
+    if (st.p.giv.includes(id) || st.val[id] !== undefined) { say('filled'); return; }
     if (n === 0) { delete st.notes[id]; draw(); save(); return; }
     if (st.noteMode) { const s = st.notes[id] || new Set(); s.has(n) ? s.delete(n) : s.add(n); st.notes[id] = s; draw(); save(); return; }
     if (n === st.p.sol[id]) {
@@ -389,16 +388,9 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
   function toggleLabels() {
     const t = T();
     $('notes').textContent = `${t.notes}: ${st.noteMode ? t.on : t.off}`;
-    $('look').textContent = `${t.look}: ${st.look ? t.on : t.off}`;
     $('notes').classList.toggle('on', st.noteMode); $('notes').setAttribute('aria-pressed', String(st.noteMode));
-    $('look').classList.toggle('on', st.look); $('look').setAttribute('aria-pressed', String(st.look));
   }
   $('notes').addEventListener('click', () => { st.noteMode = !st.noteMode; toggleLabels(); if (st.sel !== null) say(st.noteMode ? 'noteMode' : 'pick'); });
-  $('look').addEventListener('click', () => {
-    st.look = !st.look; st.focus = null; st.sel = null; toggleLabels();
-    $('lookhint').hidden = !st.look;
-    draw();
-  });
   function selectShare() { const r = document.createRange(); r.selectNodeContents($('shareText')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
   $('copy').addEventListener('click', () => {
     const t = T(), text = $('shareText').textContent;

@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<script data-goatcounter="https://ringoku.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <style>
 /* Layout: daily header with day navigation, target-shaped board, number pad and actions; result card appears in flow after solving. */
 :root {
@@ -442,7 +443,11 @@ if (typeof module !== 'undefined') module.exports = AN;
     $('shareText').textContent = t.share(st.p.number, t[st.p.level], fmt(st.ms), s);
   }
   function finish(firstTime) {
-    if (firstTime) st.ms = elapsed();
+    if (firstTime) {
+      st.ms = elapsed();
+      // Anonymous count of completed puzzles per level and day (no cookies, no personal data).
+      try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: `resuelto/${st.p.level}/${st.key}`, title: 'Puzzle resuelto', event: true }); } catch (e) {}
+    }
     st.solved = true; st.firstSolve = firstTime; st.sel = null; save();
     $('playarea').hidden = true;
     $('result').hidden = false;

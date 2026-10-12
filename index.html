@@ -6,6 +6,18 @@
 <meta name="description" content="Ringoku: a new circular logic puzzle every day. Fill each ring with 1 to 8, no repeats, and no consecutive numbers touching. Un pasatiempo de lógica nuevo cada día.">
 <meta property="og:title" content="Ringoku · the daily circular puzzle">
 <meta property="og:description" content="A new circular logic puzzle every day · Un puzzle de lógica circular nuevo cada día.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://playringoku.github.io/">
+<meta property="og:image" content="https://playringoku.github.io/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://playringoku.github.io/og.png">
+<meta name="theme-color" content="#1E2630">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <title>Ringoku</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -78,6 +90,9 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
 .stats b { display: block; font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; }
 .stats span { font-size: 12px; color: var(--muted); }
 .share { white-space: pre-line; background: var(--paper); border-radius: 8px; padding: 10px 12px; margin: 0; font-size: 15px; }
+a.btn { display: inline-flex; align-items: center; font-weight: 700; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); text-decoration: none; }
+a.btn:hover { border-color: var(--ink); }
+a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .pc { cursor: pointer; outline: none; }
 </style>
 <style>body { margin: 0; } :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }</style>
@@ -122,7 +137,13 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
       <div><b id="sSolved">0</b><span data-t="sSolved"></span></div>
     </div>
     <p class="share" id="shareText"></p>
-    <div class="row"><button class="primary" id="copy" data-t="copy"></button><span class="hint" id="copied" role="status"></span></div>
+    <div class="row">
+      <button class="primary" id="share" data-t="shareBtn" hidden></button>
+      <a class="btn" id="wa" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn" id="tw" target="_blank" rel="noopener">X</a>
+      <button id="copy" data-t="copy"></button>
+      <span class="hint" id="copied" role="status"></span>
+    </div>
   </section>
 
   <div id="playarea" style="display:grid;gap:14px">
@@ -357,7 +378,8 @@ if (typeof module !== 'undefined') module.exports = AN;
       lives: n => n === 1 ? 'Queda 1 vida' : `Quedan ${n} vidas`,
       solved: '¡Resuelto!', perfect: '¡Perfecto!', already: 'Ya lo resolviste', lostTitle: 'Sin vidas',
       sTime: 'Tiempo', sStreak: 'Racha de días', sSolved: 'Resueltos',
-      copy: 'Copiar resultado', copied: 'Copiado', copyFail: 'Selecciona el texto y cópialo',
+      shareBtn: 'Compartir', copy: 'Copiar', copied: 'Copiado', copyFail: 'Selecciona el texto y cópialo',
+      invite: url => `¿Te atreves? Juega gratis: ${url}`,
       shareWin: (n, lvl, t, hearts, h, perfect, s) => `Ringoku nº ${n} · ${lvl}\n✅ ${t} · ${hearts} · 💡${h}${perfect ? ' · ✨ Perfecto' : ''}` + (s > 1 ? `\nRacha: ${s} días` : ''),
       shareLost: (n, lvl) => `Ringoku nº ${n} · ${lvl}\n❌ Sin vidas`,
       notes: 'Notas', on: 'sí', off: 'no', del: 'Borrar notas',
@@ -385,7 +407,8 @@ if (typeof module !== 'undefined') module.exports = AN;
       lives: n => n === 1 ? '1 life left' : `${n} lives left`,
       solved: 'Solved!', perfect: 'Perfect!', already: 'Already solved', lostTitle: 'Out of lives',
       sTime: 'Time', sStreak: 'Day streak', sSolved: 'Solved',
-      copy: 'Copy result', copied: 'Copied', copyFail: 'Select the text and copy it',
+      shareBtn: 'Share', copy: 'Copy', copied: 'Copied', copyFail: 'Select the text and copy it',
+      invite: url => `Can you beat it? Play free: ${url}`,
       shareWin: (n, lvl, t, hearts, h, perfect, s) => `Ringoku #${n} · ${lvl}\n✅ ${t} · ${hearts} · 💡${h}${perfect ? ' · ✨ Perfect' : ''}` + (s > 1 ? `\nStreak: ${s} days` : ''),
       shareLost: (n, lvl) => `Ringoku #${n} · ${lvl}\n❌ Out of lives`,
       notes: 'Notes', on: 'on', off: 'off', del: 'Clear notes',
@@ -503,6 +526,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       const hearts = '❤️'.repeat(left) + '🤍'.repeat(st.mistakes);
       $('shareText').textContent = t.shareWin(st.p.number, lvl, fmt(st.ms), hearts, st.hints, perfect, s);
     }
+    updateShare();
   }
   function end(kind, firstTime) {
     if (firstTime) {
@@ -595,8 +619,26 @@ if (typeof module !== 'undefined') module.exports = AN;
   }
   $('notes').addEventListener('click', () => { st.noteMode = !st.noteMode; toggleLabels(); if (st.sel !== null) say(st.noteMode ? 'noteMode' : 'pick'); });
   function selectShare() { const r = document.createRange(); r.selectNodeContents($('shareText')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  // Sharing: native share sheet on phones; WhatsApp and X links elsewhere; copy always available.
+  const SITE = /^https?:$/.test(location.protocol) ? location.origin + location.pathname.replace(/index\.html$/, '') : 'https://playringoku.github.io/';
+  const canNativeShare = !!navigator.share && window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  const fullShare = () => $('shareText').textContent + '\n\n' + T().invite(SITE);
+  function updateShare() {
+    const text = fullShare();
+    $('share').hidden = !canNativeShare;
+    $('wa').hidden = canNativeShare; $('tw').hidden = canNativeShare;
+    $('wa').href = 'https://wa.me/?text=' + encodeURIComponent(text);
+    $('tw').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
+  }
+  $('share').addEventListener('click', () => {
+    track('compartir/nativo');
+    try { navigator.share({ text: fullShare() }).catch(() => {}); } catch (e) {}
+  });
+  $('wa').addEventListener('click', () => track('compartir/whatsapp'));
+  $('tw').addEventListener('click', () => track('compartir/x'));
   $('copy').addEventListener('click', () => {
-    const t = T(), text = $('shareText').textContent;
+    const t = T(), text = fullShare();
+    track('compartir/copiar');
     const fallback = () => { selectShare(); $('copied').textContent = t.copyFail; };
     try {
       navigator.clipboard.writeText(text).then(() => { $('copied').textContent = t.copied; setTimeout(() => { $('copied').textContent = ''; }, 2000); }, fallback);

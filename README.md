@@ -1,6 +1,6 @@
-# Anillos · Pasatiempo Circular
+# Ringoku
 
-Un pasatiempo de lógica con un puzzle nuevo cada día.
+Un pasatiempo de lógica circular con un puzzle nuevo cada día. Disponible en español e inglés: el idioma se elige según el navegador y se puede cambiar con el botón ES / EN.
 
 ## Reglas
 

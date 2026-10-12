@@ -130,10 +130,10 @@ const AN = (function () {
 
   // Difficulty by weekday (0 = Sunday): Mon/Tue easy, Wed/Thu medium, Fri/Sat hard, Sun very hard.
   const BANDS = {
-    1: ['Fácil', g => g.tier <= 2], 2: ['Fácil', g => g.tier <= 2],
-    3: ['Medio', g => g.tier === 3 && g.trials >= 3 && g.trials <= 7], 4: ['Medio', g => g.tier === 3 && g.trials >= 3 && g.trials <= 7],
-    5: ['Difícil', g => g.tier === 3 && g.trials >= 10 && g.trials <= 18], 6: ['Difícil', g => g.tier === 3 && g.trials >= 10 && g.trials <= 18],
-    0: ['Muy difícil', g => g.tier === 3 && g.trials >= 19],
+    1: ['easy', g => g.tier <= 2], 2: ['easy', g => g.tier <= 2],
+    3: ['medium', g => g.tier === 3 && g.trials >= 3 && g.trials <= 7], 4: ['medium', g => g.tier === 3 && g.trials >= 3 && g.trials <= 7],
+    5: ['hard', g => g.tier === 3 && g.trials >= 10 && g.trials <= 18], 6: ['hard', g => g.tier === 3 && g.trials >= 10 && g.trials <= 18],
+    0: ['expert', g => g.tier === 3 && g.trials >= 19],
   };
   const LAUNCH = Date.UTC(2026, 9, 12);   // Puzzle nº 1 = 12 Oct 2026
   function parseKey(key) { const [y, m, d] = key.split('-').map(Number); return Date.UTC(y, m - 1, d); }

@@ -358,7 +358,7 @@ if (typeof module !== 'undefined') module.exports = AN;
   const NS = 'http://www.w3.org/2000/svg', CX = 300, CY = 300, R = 290, WD = 59;
   const $ = id => document.getElementById(id);
   const svg = $('board'), statusEl = $('status');
-  const TODAY = AN.keyOf(new Date());
+  let TODAY = AN.keyOf(new Date());   // updated by checkNewDay() if the tab stays open past midnight
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem('anillos:v1:' + k)); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem('anillos:v1:' + k, JSON.stringify(v)); } catch (e) {} },
@@ -392,6 +392,8 @@ if (typeof module !== 'undefined') module.exports = AN;
       hintMsg: ({ v, kind }) => kind === 'unlock' ? `Pista: aquí va un ${v}. Con él se desbloquean varios trozos.` : `Pista: este trozo solo puede ser un ${v}. Fíjate en sus vecinos y en su anillo.`,
       noHints: 'Ya has usado las 3 pistas.',
       lostMsg: 'Te has quedado sin vidas. Mañana hay otro puzzle.',
+      newDay: 'Ha empezado un nuevo día: aquí tienes el puzzle de hoy.',
+      newAvail: 'Ya hay puzzle nuevo de hoy. Cuando acabes este, pulsa › para jugarlo.',
       fixed: v => `Número fijo ${v}`, yours: v => `Tu número ${v}`, empty: 'Trozo vacío',
     },
     en: {
@@ -421,6 +423,8 @@ if (typeof module !== 'undefined') module.exports = AN;
       hintMsg: ({ v, kind }) => kind === 'unlock' ? `Hint: a ${v} goes here. It unlocks several pieces.` : `Hint: this piece can only be a ${v}. Look at its neighbours and its ring.`,
       noHints: 'You’ve used all 3 hints.',
       lostMsg: 'You’re out of lives. There’s a new puzzle tomorrow.',
+      newDay: 'A new day has started: here’s today’s puzzle.',
+      newAvail: 'Today’s new puzzle is out. When you finish this one, tap › to play it.',
       fixed: v => `Given number ${v}`, yours: v => `Your number ${v}`, empty: 'Empty piece',
     },
   };
@@ -702,6 +706,23 @@ if (typeof module !== 'undefined') module.exports = AN;
     if (document.hidden) { st.ms += Date.now() - st.since; save(); } else st.since = Date.now();
   });
   setInterval(() => { if (!over() && st.p) $('timer').textContent = fmt(elapsed()); }, 1000);
+
+  // Tabs left open on a phone: when the date changes, move to the new puzzle
+  // (straight away if the old one is finished or untouched; otherwise let the player finish and tell them).
+  function checkNewDay() {
+    const now = AN.keyOf(new Date());
+    if (now === TODAY || !st.p) return;
+    const wasToday = st.key === TODAY;
+    TODAY = now;
+    const untouched = !Object.keys(st.val).length && !Object.keys(st.notes).length && !st.mistakes && !st.hints;
+    if (wasToday && (over() || untouched)) { load(TODAY); say('newDay', null, 'tip'); return; }
+    header(); $('next').disabled = st.key >= TODAY;
+    if (wasToday) say('newAvail', null, 'tip');
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkNewDay(); });
+  window.addEventListener('focus', checkNewDay);
+  window.addEventListener('pageshow', checkNewDay);
+  setInterval(checkNewDay, 30000);
 
   $('help').open = !store.get('help');
   store.set('help', 1);

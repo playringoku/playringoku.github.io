@@ -128,6 +128,42 @@ const AN = (function () {
     return { sol, giv: [...giv].sort((a, b) => a - b) };
   }
 
+  // Smart hint: the next empty piece that can be deduced from what is already on the board.
+  // known = indices of pieces whose value is known (givens + correct entries).
+  // kind: 'direct' (forced by its neighbours and ring), 'ring' (only place left in its ring for a number),
+  // 'unlock' (no simple deduction available: the piece that resolves the most others once revealed).
+  function hint(sol, known) {
+    const knownSet = new Set(known);
+    const empty = [];
+    for (let c = 0; c < C; c++) if (!knownSet.has(c)) empty.push(c);
+    if (!empty.length) return null;
+    // First-order candidates: only what the visible numbers rule out (same ring, consecutive neighbours).
+    const cand = new Array(C).fill(0);
+    for (const c of empty) {
+      let m = FULL;
+      for (const d of RING[RINGOF[c]]) if (knownSet.has(d)) m &= ~(1 << sol[d]);
+      for (const d of NB[c]) if (knownSet.has(d)) m &= ~((1 << (sol[d] - 1)) | (1 << (sol[d] + 1)));
+      cand[c] = m & FULL;
+    }
+    const direct = empty.filter(c => pc(cand[c]) === 1);
+    if (direct.length) return { cell: direct[0], value: sol[direct[0]], kind: 'direct' };
+    for (const ringCells of RING) for (let v = 1; v <= N; v++) {
+      if (ringCells.some(d => knownSet.has(d) && sol[d] === v)) continue;
+      const spots = ringCells.filter(d => !knownSet.has(d) && (cand[d] >> v) & 1);
+      if (spots.length === 1) return { cell: spots[0], value: v, kind: 'ring' };
+    }
+    const E = startState(sol, known);
+    fullProp(E);
+    let best = empty[0], bestN = -1;
+    for (const c of empty) {
+      const F = E.slice();
+      if (!assign(F, c, sol[c]) || !fullProp(F)) continue;
+      const n = empty.filter(d => pc(F[d]) === 1).length;
+      if (n > bestN) { bestN = n; best = c; }
+    }
+    return { cell: best, value: sol[best], kind: 'unlock' };
+  }
+
   // Difficulty by weekday (0 = Sunday): Mon/Tue easy, Wed/Thu medium, Fri/Sat hard, Sun very hard.
   const BANDS = {
     1: ['easy', g => g.tier <= 2], 2: ['easy', g => g.tier <= 2],
@@ -152,6 +188,6 @@ const AN = (function () {
     }
     return { ...fallback, level, number: Math.round((t - LAUNCH) / 86400000) + 1, dateKey: key };
   }
-  return { N, K, C, NB, RING, daily, keyOf, parseKey, LAUNCH, count, startState };
+  return { N, K, C, NB, RING, daily, keyOf, parseKey, LAUNCH, count, startState, hint };
 })();
 if (typeof module !== 'undefined') module.exports = AN;

@@ -9,6 +9,8 @@ Un pasatiempo de lógica circular con un puzzle nuevo cada día. Disponible en e
 
 Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro (los anillos están desplazados medio trozo, como ladrillos).
 
+**Vidas y pistas:** hay 3 vidas; cada número equivocado resta una y a la tercera se pierde el puzzle del día (se muestra la solución y la racha vuelve a cero). Las notas no cuentan. Hay 3 pistas por puzzle: cada una revela el siguiente trozo que se puede deducir con lo que hay en el tablero (`AN.hint` en `src/anillos-core.js`). El resultado para compartir indica vidas y pistas usadas, y un puzzle sin fallos ni pistas cuenta como perfecto.
+
 ## Cómo funciona el puzzle diario
 
 - La página genera el puzzle a partir de la fecha. La misma fecha produce siempre el mismo puzzle, así que todo el mundo juega el mismo ese día. No hay servidor.

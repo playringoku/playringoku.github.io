@@ -690,7 +690,7 @@ if (typeof module !== 'undefined') module.exports = AN;
   function end(kind, firstTime) {
     if (firstTime) {
       st.ms = elapsed();
-      track(`${kind === 'win' ? 'resuelto' : 'perdido'}/${st.p.level}/${st.key}`);
+      track(`${kind === 'win' ? 'resuelto' : 'perdido'}/${st.p.level}`);
     }
     if (kind === 'win') st.solved = true; else st.lost = true;
     st.firstEnd = firstTime; st.sel = null; st.wrong = null; st.glow = null; st.why = new Set(); save();

@@ -3,7 +3,7 @@
 // Usage: node book/cover.js   (after node book/build.js)
 const fs = require('fs');
 const path = require('path');
-const { board, PUZ, SITE, esc } = require('./build.js');
+const { board, PUZ, SITE, esc, logoTitle } = require('./build.js');
 const AN = require('../src/anillos-core.js');
 
 const OUT = path.join(__dirname, 'out');
@@ -20,7 +20,7 @@ const TXT = {
     ],
     rulesTitle: 'Two simple rules',
     rules: ['Each ring holds the numbers 1 to 8, once each.', 'Touching pieces can never hold the same or consecutive numbers.'],
-    inside: 'Inside this book', insideList: ['150 brand-new puzzles, from gentle warm-ups to real challenges', 'A clear guide with a worked example', 'Large boards with room for notes', 'Solutions for every puzzle'],
+    inside: 'Inside this book', insideList: ['150 brand-new puzzles, from gentle warm-ups to real challenges', 'A clear guide with a worked example', 'Hints for the hard puzzles, so you never get stuck', 'Large boards with room for notes', 'Solutions for every puzzle'],
     web: `Play a new free puzzle every day at ${SITE}`,
   },
   es: {
@@ -33,7 +33,7 @@ const TXT = {
     ],
     rulesTitle: 'Dos reglas sencillas',
     rules: ['Cada anillo lleva los números del 1 al 8, una vez cada uno.', 'Los trozos que se tocan nunca pueden tener el mismo número ni números seguidos.'],
-    inside: 'En este libro', insideList: ['150 puzzles inéditos, de calentamiento suave a verdaderos retos', 'Una guía clara con un ejemplo resuelto', 'Tableros grandes con espacio para anotar', 'Las soluciones de todos los puzzles'],
+    inside: 'En este libro', insideList: ['150 puzzles inéditos, de calentamiento suave a verdaderos retos', 'Una guía clara con un ejemplo resuelto', 'Pistas para los difíciles, por si te atascas', 'Tableros grandes con espacio para anotar', 'Las soluciones de todos los puzzles'],
     web: `Juega gratis a un puzzle nuevo cada día en ${SITE}`,
   },
 };
@@ -66,6 +66,9 @@ body { margin: 0; width: ${W}in; height: ${H}in; background: #1E2630; color: #F3
 .spine span { writing-mode: vertical-rl; font-family: BookDisplay, sans-serif; font-weight: 800; font-size: ${Math.min(11, spine * 72 * 0.55).toFixed(1)}pt; letter-spacing: 2pt; color: #FFFFFF; }
 .front { left: ${BLEED + TRIM_W + spine}in; width: ${BLEED + TRIM_W}in; padding: ${BLEED + 0.65}in ${BLEED + 0.6}in ${BLEED + 0.6}in 0.6in; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .front h1 { font-family: BookDisplay, sans-serif; font-weight: 800; font-size: 96pt; letter-spacing: -2pt; margin: 0; line-height: 1; }
+.logo-o { display: inline-block; height: 0.64em; width: 0.64em; vertical-align: -0.02em; margin: 0 0.015em; }
+.logo-o svg { width: 100%; height: 100%; display: block; }
+.logo-o svg > circle { stroke: #F3F4F1; stroke-width: 1.2; }
 .front .sub { font-family: BookDisplay, sans-serif; font-weight: 600; font-size: 24pt; color: #BFD9F2; margin-top: 10pt; }
 .front .art { position: relative; width: 6.3in; margin-top: 0.35in; }
 .front .art svg { width: 100%; display: block; }
@@ -90,7 +93,7 @@ body { margin: 0; width: ${W}in; height: ${H}in; background: #1E2630; color: #F3
   const html = `<!doctype html><html lang="${lang}"><meta charset="utf-8"><style>${css}</style><body>
 <div class="back">${backHtml}</div>
 <div class="spine">${spineText ? '<span>RINGOKU</span>' : ''}</div>
-<div class="front"><h1>${t.title}</h1><div class="sub">${esc(t.sub)}</div>
+<div class="front"><h1>${logoTitle('cover')}</h1><div class="sub">${esc(t.sub)}</div>
 <div class="art">${frontBoard()}<div class="badge"><b>${t.badge}</b><span>${t.badgeSub}</span></div></div>
 <div class="tags">${t.tags.map(x => `<span>${esc(x)}</span>`).join('')}</div></div>
 </body></html>`;

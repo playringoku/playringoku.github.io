@@ -30,10 +30,12 @@ const T = {
       'Check each ring as a whole: if a number fits in only one of its gaps, it must go there.',
       'Pencil small candidates in a corner of the piece and cross them out as you go.',
       'Pieces in the outer and inner rings touch only 4 others; those in the two middle rings touch 6.'],
-    contents: 'Contents', solutionsTitle: 'Solutions',
+    contents: 'Contents', solutionsTitle: 'Solutions', hintsTitle: 'Hints for Hard and Very hard',
+    hintsIntro: 'Stuck but don’t want to see the whole solution? Each Hard and Very hard puzzle has one hint for every point where simple deductions run out. Hint A gives you one key number that gets you moving again; look at Hint B only if you get stuck a second time. The grey numbers are the ones printed in the puzzle, to help you find your place.',
+    hint: 'Hint',
     levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Very hard' },
     levelNote: { easy: 'Simple deductions, many moves available.', medium: 'Still no guessing, but fewer moves at a time.', hard: 'Short “what if…” chains of reasoning.', expert: 'Longer chains of reasoning. Take your time.' },
-    puzzle: 'Puzzle', time: 'Time', more: ['Enjoyed it?', 'There’s a new free Ringoku every day at', SITE, 'Easy on Monday, harder each day until Sunday.'],
+    puzzle: 'Puzzle', more: ['Enjoyed it?', 'There’s a new free Ringoku every day at', SITE, 'Easy on Monday, harder each day until Sunday.'],
   },
   es: {
     title: 'Ringoku', sub: '150 pasatiempos de lógica circular', sub2: 'De fácil a muy difícil · con soluciones',
@@ -52,10 +54,12 @@ const T = {
       'Mira cada anillo entero: si un número solo cabe en uno de sus huecos, tiene que ir ahí.',
       'Apunta candidatos pequeños en una esquina del trozo y ve tachándolos.',
       'Los trozos del anillo exterior y del interior tocan solo a 4; los de los dos anillos centrales, a 6.'],
-    contents: 'Contenido', solutionsTitle: 'Soluciones',
+    contents: 'Contenido', solutionsTitle: 'Soluciones', hintsTitle: 'Pistas para los difíciles y muy difíciles',
+    hintsIntro: '¿Te has atascado pero no quieres ver la solución entera? Cada puzzle difícil y muy difícil tiene una pista por cada punto en que se acaban las deducciones sencillas. La pista A te da un número clave para volver a avanzar; mira la pista B solo si te atascas por segunda vez. Los números grises son los que vienen impresos en el puzzle, para que te ubiques.',
+    hint: 'Pista',
     levels: { easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil' },
     levelNote: { easy: 'Deducciones sencillas, con muchas jugadas a la vista.', medium: 'Sin adivinar, pero con pocas jugadas a la vez.', hard: 'Razonamientos cortos del tipo «si aquí fuera un…».', expert: 'Razonamientos más largos. Tómatelo con calma.' },
-    puzzle: 'Puzzle', time: 'Tiempo', more: ['¿Te ha gustado?', 'Tienes un Ringoku nuevo y gratis cada día en', SITE, 'Fácil el lunes y cada día más difícil hasta el domingo.'],
+    puzzle: 'Puzzle', more: ['¿Te ha gustado?', 'Tienes un Ringoku nuevo y gratis cada día en', SITE, 'Fácil el lunes y cada día más difícil hasta el domingo.'],
   },
 };
 
@@ -88,6 +92,19 @@ function board(opts) {
   return s + `<circle cx="${CX}" cy="${CX}" r="${R - K * WD}" fill="${pal.hole}" stroke="${pal.line}" stroke-width="${opts.stroke || 1.6}"/></svg>`;
 }
 const givenVals = p => Object.fromEntries(p.giv.map(c => [c, p.sol[c]]));
+// The pieces that unblock a puzzle: one for each point where simple deductions run out (at most 2).
+function keyPieces(p) {
+  const known = [...p.giv], keys = [];
+  while (known.length < AN.C && keys.length < 2) { const h = AN.hint(p.sol, known); if (h.kind === 'unlock') keys.push(h.cell); known.push(h.cell); }
+  return keys.length ? keys : [AN.hint(p.sol, p.giv).cell];
+}
+// The website icon used as the "o" in "Ringoku". mode 'print' = greyscale for the black & white interior.
+const ICON = fs.readFileSync(path.join(__dirname, '..', 'favicon.svg'), 'utf8').replace(/ width="64" height="64"/, '');
+function logoTitle(mode) {
+  let svg = ICON;
+  if (mode === 'print') svg = svg.replace(/#1E2630/g, '#111111').replace(/#BFD9F2/g, '#BDBDBD').replace(/#F6D27A/g, '#8C8C8C').replace(/#E3E9DF/g, '#E6E6E6');
+  return `Ring<span class="logo-o" role="img" aria-label="o">${svg}</span>ku`;
+}
 
 // Worked example for "How to play": the first simple deduction in the first easy puzzle.
 function example(lang) {
@@ -124,6 +141,8 @@ body { margin: 0; font-family: BookSans, sans-serif; color: #111; -webkit-print-
 h1, h2, h3, .url { font-family: BookDisplay, sans-serif; margin: 0; }
 .title { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.18in; }
 .title h1 { font-size: 66pt; font-weight: 800; letter-spacing: -1.5pt; }
+.logo-o { display: inline-block; height: 0.64em; width: 0.64em; vertical-align: -0.02em; margin: 0 0.015em; }
+.title h1 .logo-o svg, .logo-o svg { width: 100%; height: 100%; display: block; margin: 0; }
 .title .s1 { font-size: 20pt; font-weight: 600; }
 .title .s2 { font-size: 13pt; color: #444; }
 .title svg { width: 4.4in; margin-top: 0.3in; }
@@ -145,13 +164,22 @@ ul { padding-left: 18pt; margin: 0; }
 .two { display: flex; flex-direction: column; height: 100%; gap: 0.2in; }
 .with-head .two { height: calc(100% - 0.6in); }
 .pz { flex: 1; display: flex; flex-direction: column; align-items: center; min-height: 0; }
-.pzh { width: 100%; display: flex; justify-content: space-between; font-size: 11pt; font-weight: 700; margin-bottom: 4pt; }
+.pzh { width: 100%; display: flex; justify-content: center; font-size: 11pt; font-weight: 700; margin-bottom: 4pt; }
 .pzh .t { font-weight: 400; color: #444; }
 .pz svg { flex: 1; min-height: 0; width: 100%; }
 .sols { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 0.15in 0.3in; height: calc(100% - 0.55in); }
 .sol { display: flex; flex-direction: column; align-items: center; min-height: 0; }
 .sol b { font-size: 10pt; margin-bottom: 2pt; }
 .sol svg { flex: 1; min-height: 0; width: 100%; }
+.hintintro { font-size: 11pt; color: #333; margin-bottom: 8pt; }
+.hints { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 3.05in; gap: 0.12in 0.35in; }
+.hint { display: flex; flex-direction: column; min-height: 0; border-top: 1px solid #ccc; padding-top: 4pt; }
+.hint b { font-size: 10pt; margin-bottom: 2pt; }
+.minis { display: flex; gap: 0.15in; flex: 1; min-height: 0; }
+.minis figure { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; flex: 1; max-width: 1.65in; }
+.minis svg { width: 100%; height: auto; }
+.minis.one figure { max-width: 2.45in; }
+.minis figcaption { font-size: 10pt; font-weight: 700; color: #222; margin-top: 3pt; }
 .end { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8pt; }
 .end h2 { font-size: 28pt; } .end .url { font-size: 22pt; font-weight: 800; margin: 4pt 0 10pt; }
 `;
@@ -159,7 +187,7 @@ ul { padding-left: 18pt; margin: 0; }
 function interior(lang) {
   const t = T[lang], pages = [];
   const page = (html, cls = '', num = true) => pages.push({ html, cls, num });
-  page(`<h1>${t.title}</h1><div class="s1">${esc(t.sub)}</div><div class="s2">${esc(t.sub2)}</div>${board({ values: givenVals(PUZ[0]), bold: new Set(PUZ[0].giv), stroke: 1.8 })}`, 'title', false);
+  page(`<h1>${logoTitle('print')}</h1><div class="s1">${esc(t.sub)}</div><div class="s2">${esc(t.sub2)}</div>${board({ values: givenVals(PUZ[0]), bold: new Set(PUZ[0].giv), stroke: 1.8 })}`, 'title', false);
   page(t.copy.map(x => `<p>${esc(x)}</p>`).join(''), 'copy', false);
   const ex = example(lang);
   page(`<h2>${t.howTitle}</h2><ol class="rules">${t.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ol>
@@ -175,8 +203,14 @@ function interior(lang) {
     if (b && b.level !== a.level) throw new Error('level change inside a page');
     let head = '';
     if (!levelStart[a.level]) { levelStart[a.level] = pages.length + 1; head = `<div class="lvlhead"><h2>${t.levels[a.level]}</h2><span>${esc(t.levelNote[a.level])}</span></div>`; }
-    const one = p => p ? `<div class="pz"><div class="pzh"><span>${t.puzzle} ${p.n} · ${t.levels[p.level]}</span><span class="t">${t.time}: ________</span></div>${board({ values: givenVals(p), bold: new Set(p.giv) })}</div>` : '<div class="pz"></div>';
+    const one = p => p ? `<div class="pz"><div class="pzh"><span>${t.puzzle} ${p.n} · ${t.levels[p.level]}</span></div>${board({ values: givenVals(p), bold: new Set(p.giv) })}</div>` : '<div class="pz"></div>';
     page(`${head}<div class="two">${one(a)}${one(b)}</div>`, head ? 'with-head' : '');
+  }
+  const hintStart = pages.length + 1, withHints = PUZ.filter(p => p.level === 'hard' || p.level === 'expert');
+  for (let i = 0; i < withHints.length; ) {
+    const size = i === 0 ? 4 : 6, chunk = withHints.slice(i, i + size); i += size;
+    page(`${i === size ? `<h2>${esc(t.hintsTitle)}</h2><p class="hintintro">${esc(t.hintsIntro)}</p>` : ''}<div class="hints">${chunk.map(p =>
+      `<div class="hint"><b>${t.puzzle} ${p.n}</b><div class="minis${keyPieces(p).length === 1 ? ' one' : ''}">${keyPieces(p).map((c, j) => `<figure>${board({ values: { ...givenVals(p), [c]: p.sol[c] }, bold: new Set([c]), fill: { [c]: '#CFCFCF' }, stroke: 1.4 })}<figcaption>${t.hint} ${'AB'[j]}</figcaption></figure>`).join('')}</div></div>`).join('')}</div>`, i === size ? 'hints-first' : '');
   }
   const solStart = pages.length + 1;
   for (let i = 0; i < PUZ.length; i += 6) {
@@ -187,6 +221,7 @@ function interior(lang) {
   if (pages.length % 2) page('', '', false);   // KDP prefers an even page count
   const toc = `<h2>${t.contents}</h2><table class="toc">${['easy', 'medium', 'hard', 'expert'].map(l => {
     const ps = PUZ.filter(p => p.level === l); return `<tr><td>${t.levels[l]} · ${t.puzzle} ${ps[0].n}–${ps[ps.length - 1].n}</td><td>${levelStart[l]}</td></tr>`; }).join('')}
+    <tr><td>${esc(t.hintsTitle)}</td><td>${hintStart}</td></tr>
     <tr><td>${t.solutionsTitle}</td><td>${solStart}</td></tr></table>
     <h3>${t.tipsTitle}</h3><ul>${t.tips.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
   const html = `<!doctype html><html lang="${lang}"><meta charset="utf-8"><style>${CSS}</style><body>` +
@@ -194,7 +229,7 @@ function interior(lang) {
   return { html, count: pages.length };
 }
 
-module.exports = { T, board, givenVals, PUZ, SITE, list, esc };
+module.exports = { T, board, givenVals, PUZ, SITE, list, esc, logoTitle };
 
 if (require.main === module) {
   (async () => {

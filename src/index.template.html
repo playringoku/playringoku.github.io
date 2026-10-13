@@ -8,18 +8,19 @@
 :root {
   --bg: #F3F4F1; --paper: #FFFFFF; --tint: #EEF2EA; --ink: #1E2630; --muted: #5A6470; --line: #CDD3CB;
   --hi: #F6D27A; --nb: #BFD9F2; --accent: #2F6FB0; --bad: #B3261E; --badbg: #F9DEDC; --good: #2D7A4D; --goodbg: #E3F1E8;
+  --hint: #9A6700; --whybg: #FCEFC7; --whyline: #C99A2E;
   --display: "Unbounded", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
   --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #15191D; --paper: #20262C; --tint: #2A3138; --ink: #E7EAE4; --muted: #9BA4AC; --line: #3A4249;
-    --hi: #8A6A1E; --nb: #23405C; --accent: #7DB3EA; --bad: #F07167; --badbg: #4A2422; --good: #5DBF85; --goodbg: #1E3328; color-scheme: dark;
+    --hi: #66501A; --nb: #23405C; --accent: #7DB3EA; --bad: #F07167; --badbg: #4A2422; --good: #5DBF85; --goodbg: #1E3328; --hint: #E3B341; --whybg: #4A3D1A; --whyline: #C99A2E; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #15191D; --paper: #20262C; --tint: #2A3138; --ink: #E7EAE4; --muted: #9BA4AC; --line: #3A4249;
-  --hi: #8A6A1E; --nb: #23405C; --accent: #7DB3EA; --bad: #F07167; --badbg: #4A2422; --good: #5DBF85; --goodbg: #1E3328; color-scheme: dark;
+  --hi: #66501A; --nb: #23405C; --accent: #7DB3EA; --bad: #F07167; --badbg: #4A2422; --good: #5DBF85; --goodbg: #1E3328; --hint: #E3B341; --whybg: #4A3D1A; --whyline: #C99A2E; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -158,7 +159,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
       r3: 'Tienes 3 vidas: cada número equivocado resta una. Las notas no cuentan.',
-      rhelp: 'Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro. Al tocar un trozo se resaltan en azul los 6 que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en verde los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en verde: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
+      rhelp: 'Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro. Al tocar un trozo se resaltan en azul los 6 que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
       easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil',
@@ -177,7 +178,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       pick: 'Elige un número para ese trozo.', noteMode: 'Modo notas: toca números para apuntar o quitar posibilidades.',
       selectFirst: 'Primero toca un trozo vacío.', good: 'Bien.',
       wrongNum: n => n === 1 ? 'Ese número no va ahí. Te queda 1 vida.' : `Ese número no va ahí. Te quedan ${n} vidas.`,
-      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Pista: aquí va un ${v}. Con él se desbloquean varios trozos.` : kind === 'ring' ? `Pista: en este anillo, el ${v} solo cabe aquí. Los trozos en verde lo impiden en los demás huecos.` : `Pista: aquí solo cabe un ${v}. Los trozos en verde descartan todos los demás números.`,
+      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Pista: aquí va un ${v}. Con él se desbloquean varios trozos.` : kind === 'ring' ? `Pista: en este anillo, el ${v} solo cabe aquí. Los trozos en amarillo lo impiden en los demás huecos.` : `Pista: aquí solo cabe un ${v}. Los trozos en amarillo descartan todos los demás números.`,
       noHints: 'Ya has usado las 3 pistas.',
       inRing: 'Ese número ya está en este aro.',
       lostMsg: 'Te has quedado sin vidas. Mañana hay otro puzzle.',
@@ -190,7 +191,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
       r3: 'You have 3 lives: each wrong number costs one. Notes don’t count.',
-      rhelp: 'Each piece touches 6 others: 2 beside it, 2 in the ring outside and 2 in the ring inside. Tapping a piece highlights the 6 pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in green the pieces it relies on (3 per puzzle). Numbers placed by a hint stay green: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday.',
+      rhelp: 'Each piece touches 6 others: 2 beside it, 2 in the ring outside and 2 in the ring inside. Tapping a piece highlights the 6 pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday.',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
       easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',
@@ -209,7 +210,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       pick: 'Pick a number for that piece.', noteMode: 'Notes mode: tap numbers to add or remove candidates.',
       selectFirst: 'Tap an empty piece first.', good: 'Good.',
       wrongNum: n => n === 1 ? 'That number doesn’t go there. 1 life left.' : `That number doesn’t go there. ${n} lives left.`,
-      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Hint: a ${v} goes here. It unlocks several pieces.` : kind === 'ring' ? `Hint: in this ring, the ${v} only fits here. The green pieces block it everywhere else.` : `Hint: only a ${v} fits here. The green pieces rule out every other number.`,
+      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Hint: a ${v} goes here. It unlocks several pieces.` : kind === 'ring' ? `Hint: in this ring, the ${v} only fits here. The yellow pieces block it everywhere else.` : `Hint: only a ${v} fits here. The yellow pieces rule out every other number.`,
       noHints: 'You’ve used all 3 hints.',
       inRing: 'That number is already in this ring.',
       lostMsg: 'You’re out of lives. There’s a new puzzle tomorrow.',
@@ -283,21 +284,21 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
         const isWrong = st.wrong && st.wrong.id === id && !over();
         if (isWrong) fill = 'var(--badbg)';
         else if (st.glow === id) fill = 'var(--hi)';
-        else if (st.why.has(id)) fill = 'var(--goodbg)';
+        else if (st.why.has(id)) fill = 'var(--whybg)';
         else if (hiNb.has(id)) fill = 'var(--nb)';
         const g = el('g', { 'data-id': id }, svg);
         if (!over()) { g.setAttribute('class', 'pc'); g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button'); }
         g.setAttribute('aria-label', given ? t.fixed(p.sol[id]) : placed ? t.yours(st.val[id]) : t.empty);
         const isSel = st.sel === id && !over();
         el('path', { d: `M${a[0]} ${a[1]} A${r1} ${r1} 0 0 1 ${b[0]} ${b[1]} L${c[0]} ${c[1]} A${r0} ${r0} 0 0 0 ${d[0]} ${d[1]} Z`,
-          fill, stroke: isWrong ? 'var(--bad)' : isSel ? 'var(--accent)' : st.why.has(id) ? 'var(--good)' : 'var(--ink)',
+          fill, stroke: isWrong ? 'var(--bad)' : isSel ? 'var(--accent)' : st.why.has(id) ? 'var(--whyline)' : 'var(--ink)',
           'stroke-width': isSel || isWrong ? 4 : st.why.has(id) ? 3 : 1.2 }, g);
         const m = pt((r0 + r1) / 2, th);
         const v = value(id) || (st.lost ? p.sol[id] : 0);
         if (isWrong) el('text', { x: m[0], y: m[1] + 10, 'text-anchor': 'middle', 'font-family': 'var(--display)', 'font-weight': 700, 'font-size': 28,
           fill: 'var(--bad)', 'text-decoration': 'line-through', 'pointer-events': 'none' }, g).textContent = st.wrong.n;
-        else if (v) el('text', { x: m[0], y: m[1] + 10, 'text-anchor': 'middle', 'font-family': 'var(--display)', 'font-weight': given ? 700 : 500, 'font-size': 28,
-          fill: given ? 'var(--ink)' : st.hinted[id] ? 'var(--good)' : value(id) ? 'var(--accent)' : 'var(--muted)', 'pointer-events': 'none' }, g).textContent = v;
+        else if (v) el('text', { x: m[0], y: m[1] + 10, 'text-anchor': 'middle', 'font-family': 'var(--display)', 'font-weight': given || st.hinted[id] ? 700 : 500, 'font-size': 28,
+          fill: given ? 'var(--ink)' : st.hinted[id] ? 'var(--hint)' : value(id) ? 'var(--accent)' : 'var(--muted)', 'pointer-events': 'none' }, g).textContent = v;
         else if (st.notes[id] && st.notes[id].size) {
           const arr = [...st.notes[id]].sort(), lines = arr.length > 4 ? [arr.slice(0, 4), arr.slice(4)] : [arr];
           const tx = el('text', { x: m[0], y: m[1] + (lines.length > 1 ? -4 : 6), 'text-anchor': 'middle', 'font-family': 'var(--body)', 'font-weight': 700, 'font-size': 18, 'letter-spacing': 1, fill: 'var(--muted)', 'pointer-events': 'none' }, g);
@@ -355,7 +356,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     draw();
   }
 
-  // Show why a hint placed its number: the piece in yellow and the pieces that force it in green.
+  // Show why a hint placed its number: the piece in yellow and the pieces that force it outlined in amber.
   // It stays until the player taps anywhere else.
   function showHint(id) {
     const h = st.hinted[id];

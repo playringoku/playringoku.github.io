@@ -103,7 +103,7 @@ function example(lang) {
   });
   const ring = h.why.filter(e => !NB[id].includes(e)).map(e => sol[e]).sort((a, b) => a - b);
   const fill = { [id]: '#BDBDBD' }; for (const e of h.why) fill[e] = '#DCDCDC';
-  return { svg: board({ values: givenVals(p), bold: new Set(p.giv), fill, marks: { [id]: '?' } }), text: T[lang].exText(v, parts, ring) };
+  return { svg: board({ values: givenVals(p), bold: new Set([...p.giv, id]), fill, marks: { [id]: '?' } }), text: T[lang].exText(v, parts, ring) };
 }
 function neighboursDemo() {
   const id = 8 + 2;   // a piece in the second ring touches 6
@@ -134,7 +134,7 @@ h3 { font-size: 14pt; font-weight: 800; margin: 14pt 0 4pt; }
 p, li { font-size: 11.5pt; line-height: 1.45; margin: 0 0 6pt; }
 ol.rules { padding-left: 20pt; margin: 0 0 8pt; } ol.rules li { margin-bottom: 4pt; font-weight: 600; font-size: 12.5pt; }
 .fig { display: flex; gap: 0.3in; align-items: center; margin: 6pt 0; }
-.fig svg { width: 2.7in; flex: none; }
+.fig svg { width: 3.1in; flex: none; }
 .fig figcaption { font-size: 11pt; line-height: 1.45; color: #222; }
 .fig.small svg { width: 2.1in; }
 .toc { width: 100%; border-collapse: collapse; font-size: 12pt; margin: 6pt 0 10pt; }

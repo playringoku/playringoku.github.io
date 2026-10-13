@@ -565,6 +565,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (now === TODAY || !st.p) return;
     const wasToday = st.key === TODAY;
     TODAY = now;
+    retention();
     const untouched = !Object.keys(st.val).length && !Object.keys(st.notes).length && !st.mistakes && !st.hints;
     if (wasToday && (over() || untouched)) { load(TODAY); say('newDay', null, 'tip'); return; }
     header(); $('next').disabled = st.key >= TODAY;
@@ -575,9 +576,34 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   window.addEventListener('pageshow', checkNewDay);
   setInterval(checkNewDay, 30000);
 
+  // Retención anónima: sin cookies ni identificadores. El navegador solo guarda en qué días se abrió el puzzle
+  // y avisa a GoatCounter una vez por hito: jugador nuevo, vuelve al día siguiente, y su 2.º, 3.º, 7.º, 14.º y 30.º día distinto.
+  // Retención = retencion/dias-2 ÷ retencion/nuevo (y así con cada hito).
+  function sendEvent(path, tries = 0) {
+    if (window.goatcounter && window.goatcounter.count) { track(path); return; }
+    if (tries < 20) setTimeout(() => sendEvent(path, tries + 1), 500);   // count.js se carga en async
+  }
+  function retention() {
+    let days = store.get('days');
+    if (!days) {   // primera vez con este código: recupera los días ya jugados antes, para no contar a los antiguos como nuevos
+      days = [];
+      for (let k = shiftKey(TODAY, -1); AN.parseKey(k) >= AN.LAUNCH; k = shiftKey(k, -1)) if (store.get(k)) days.unshift(k);
+      store.set('daysCount', days.length);
+      if (days.length) sendEvent('retencion/antiguo');
+    }
+    if (days.includes(TODAY)) return;
+    const last = days[days.length - 1];
+    days.push(TODAY); store.set('days', days.slice(-60));
+    const n = (store.get('daysCount') || 0) + 1; store.set('daysCount', n);
+    if (n === 1) sendEvent('retencion/nuevo');
+    if (last === shiftKey(TODAY, -1)) sendEvent('retencion/vuelve-al-dia-siguiente');
+    if ([2, 3, 7, 14, 30].includes(n)) sendEvent(`retencion/dias-${n}`);
+  }
+
   $('help').open = !store.get('help');
   store.set('help', 1);
   applyLang();
   load(TODAY);
+  retention();
 })();
 </script>

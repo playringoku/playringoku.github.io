@@ -24,6 +24,7 @@ Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino (los anillos es
 - Todos los puzzles tienen una única solución y se resuelven razonando.
 - El progreso, la racha y los tiempos se guardan en el navegador de cada jugador (`localStorage`). Van ligados al dominio: si la web cambia de dominio, se pierden.
 - El puzzle nº 1 corresponde al 12 de octubre de 2026.
+- Retención (anónima, sin cookies): el navegador guarda solo los días en que se abrió el puzzle y manda a GoatCounter un evento por hito: `retencion/nuevo` (primer día), `retencion/vuelve-al-dia-siguiente`, `retencion/dias-2`, `-3`, `-7`, `-14` y `-30` (días distintos jugados) y `retencion/antiguo` (jugadores de antes de añadir esto). Retención al 2.º día ≈ `dias-2` ÷ `nuevo`.
 
 ## Estructura
 

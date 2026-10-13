@@ -41,4 +41,32 @@ for (let d = 0; d < 28; d++) {
   if (!same || !v || u !== 1) problems++;
   console.log(`${key} nº${p.number} ${p.level.padEnd(11)} pistas ${String(p.giv.length).padStart(2)} pruebas ${String(p.trials).padStart(2)} ${ms}ms determinista=${same} válida=${v} soluciones=${u}`);
 }
+// Hint explanations: the highlighted pieces alone must justify the answer.
+let hintsChecked = 0, badWhy = 0;
+for (let d = 0; d < 56; d++) {
+  const key = new Date(start.getTime() + d * 86400000).toISOString().slice(0, 10);
+  const p = AN.daily(key), known = [...p.giv];
+  while (known.length < C) {
+    const h = AN.hint(p.sol, known);
+    if (h.value !== p.sol[h.cell]) badWhy++;
+    if (h.kind === 'direct') {
+      const out = new Set();
+      for (const e of h.why) {
+        if (Math.floor(e / N) === Math.floor(h.cell / N)) out.add(p.sol[e]);
+        if (NB[h.cell].includes(e)) [p.sol[e] - 1, p.sol[e], p.sol[e] + 1].forEach(w => out.add(w));
+      }
+      for (let w = 1; w <= 8; w++) if (w !== h.value && !out.has(w)) { badWhy++; break; }
+    } else if (h.kind === 'ring') {
+      const k = Math.floor(h.cell / N);
+      for (let i = 0; i < N; i++) {
+        const o = k * N + i;
+        if (o === h.cell || known.includes(o)) continue;
+        if (!h.why.some(e => NB[o].includes(e) && Math.abs(p.sol[e] - h.value) <= 1)) { badWhy++; break; }
+      }
+    }
+    known.push(h.cell); hintsChecked++;
+  }
+}
+if (badWhy) problems++;
+console.log(`pistas comprobadas ${hintsChecked} · explicaciones incorrectas ${badWhy}`);
 console.log('tiempo máximo', maxMs, 'ms · problemas', problems);

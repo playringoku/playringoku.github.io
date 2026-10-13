@@ -107,6 +107,7 @@ const AN = (function () {
   // known = indices of pieces whose value is known (givens + correct entries).
   // kind: 'direct' (forced by its neighbours and ring), 'ring' (only place left in its ring for a number),
   // 'unlock' (no simple deduction available: the piece that resolves the most others once revealed).
+  // why: the visible pieces that force the answer (a small set, chosen greedily), so the game can show them.
   function hint(sol, known) {
     const knownSet = new Set(known);
     const empty = [];
@@ -121,11 +122,11 @@ const AN = (function () {
       cand[c] = m & FULL;
     }
     const direct = empty.filter(c => pc(cand[c]) === 1);
-    if (direct.length) return { cell: direct[0], value: sol[direct[0]], kind: 'direct' };
+    if (direct.length) { const c = direct[0]; return { cell: c, value: sol[c], kind: 'direct', why: whyDirect(sol, knownSet, c) }; }
     for (const ringCells of RING) for (let v = 1; v <= N; v++) {
       if (ringCells.some(d => knownSet.has(d) && sol[d] === v)) continue;
       const spots = ringCells.filter(d => !knownSet.has(d) && (cand[d] >> v) & 1);
-      if (spots.length === 1) return { cell: spots[0], value: v, kind: 'ring' };
+      if (spots.length === 1) return { cell: spots[0], value: v, kind: 'ring', why: whyRing(sol, knownSet, ringCells, spots[0], v) };
     }
     const E = startState(sol, known);
     fullProp(E);
@@ -136,7 +137,46 @@ const AN = (function () {
       const n = empty.filter(d => pc(F[d]) === 1).length;
       if (n > bestN) { bestN = n; best = c; }
     }
-    return { cell: best, value: sol[best], kind: 'unlock' };
+    return { cell: best, value: sol[best], kind: 'unlock', why: [] };
+  }
+  // Values a visible piece d rules out for the empty piece c (same ring: its number; neighbour: equal or consecutive).
+  function rulesOut(sol, c, d) {
+    const out = new Set();
+    if (RINGOF[d] === RINGOF[c]) out.add(sol[d]);
+    if (NB[c].includes(d)) for (const w of [sol[d] - 1, sol[d], sol[d] + 1]) if (w >= 1 && w <= N) out.add(w);
+    return out;
+  }
+  // Greedy cover: pick the fewest visible pieces that together rule out every other number for this piece.
+  function whyDirect(sol, knownSet, c) {
+    const need = new Set(); for (let w = 1; w <= N; w++) if (w !== sol[c]) need.add(w);
+    const pool = [...new Set([...RING[RINGOF[c]], ...NB[c]])].filter(d => knownSet.has(d));
+    const why = [];
+    while (need.size) {
+      let best = null, gain = 0;
+      for (const d of pool) {
+        const g = [...rulesOut(sol, c, d)].filter(w => need.has(w)).length + (NB[c].includes(d) ? 0.1 : 0);
+        if (g > gain) { gain = g; best = d; }
+      }
+      if (best === null) break;
+      for (const w of rulesOut(sol, c, best)) need.delete(w);
+      why.push(best); pool.splice(pool.indexOf(best), 1);
+    }
+    return why;
+  }
+  // For "only place in its ring": the visible neighbours that stop v from going in each other empty piece of the ring.
+  function whyRing(sol, knownSet, ringCells, cell, v) {
+    const blocked = ringCells.filter(d => d !== cell && !knownSet.has(d));
+    const blocks = e => blocked.filter(d => NB[d].includes(e) && Math.abs(sol[e] - v) <= 1);
+    const pool = [...new Set(blocked.flatMap(d => NB[d]))].filter(e => knownSet.has(e));
+    const left = new Set(blocked), why = [];
+    while (left.size) {
+      let best = null, gain = 0;
+      for (const e of pool) { const g = blocks(e).filter(d => left.has(d)).length; if (g > gain) { gain = g; best = e; } }
+      if (best === null) break;
+      for (const d of blocks(best)) left.delete(d);
+      why.push(best);
+    }
+    return why;
   }
 
   // Human-like difficulty. Each time simple reasoning stalls, the player needs a "what if" that breaks.

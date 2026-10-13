@@ -267,6 +267,7 @@ const AN = (function () {
   // known = indices of pieces whose value is known (givens + correct entries).
   // kind: 'direct' (forced by its neighbours and ring), 'ring' (only place left in its ring for a number),
   // 'unlock' (no simple deduction available: the piece that resolves the most others once revealed).
+  // why: the visible pieces that force the answer (a small set, chosen greedily), so the game can show them.
   function hint(sol, known) {
     const knownSet = new Set(known);
     const empty = [];
@@ -281,11 +282,11 @@ const AN = (function () {
       cand[c] = m & FULL;
     }
     const direct = empty.filter(c => pc(cand[c]) === 1);
-    if (direct.length) return { cell: direct[0], value: sol[direct[0]], kind: 'direct' };
+    if (direct.length) { const c = direct[0]; return { cell: c, value: sol[c], kind: 'direct', why: whyDirect(sol, knownSet, c) }; }
     for (const ringCells of RING) for (let v = 1; v <= N; v++) {
       if (ringCells.some(d => knownSet.has(d) && sol[d] === v)) continue;
       const spots = ringCells.filter(d => !knownSet.has(d) && (cand[d] >> v) & 1);
-      if (spots.length === 1) return { cell: spots[0], value: v, kind: 'ring' };
+      if (spots.length === 1) return { cell: spots[0], value: v, kind: 'ring', why: whyRing(sol, knownSet, ringCells, spots[0], v) };
     }
     const E = startState(sol, known);
     fullProp(E);
@@ -296,7 +297,46 @@ const AN = (function () {
       const n = empty.filter(d => pc(F[d]) === 1).length;
       if (n > bestN) { bestN = n; best = c; }
     }
-    return { cell: best, value: sol[best], kind: 'unlock' };
+    return { cell: best, value: sol[best], kind: 'unlock', why: [] };
+  }
+  // Values a visible piece d rules out for the empty piece c (same ring: its number; neighbour: equal or consecutive).
+  function rulesOut(sol, c, d) {
+    const out = new Set();
+    if (RINGOF[d] === RINGOF[c]) out.add(sol[d]);
+    if (NB[c].includes(d)) for (const w of [sol[d] - 1, sol[d], sol[d] + 1]) if (w >= 1 && w <= N) out.add(w);
+    return out;
+  }
+  // Greedy cover: pick the fewest visible pieces that together rule out every other number for this piece.
+  function whyDirect(sol, knownSet, c) {
+    const need = new Set(); for (let w = 1; w <= N; w++) if (w !== sol[c]) need.add(w);
+    const pool = [...new Set([...RING[RINGOF[c]], ...NB[c]])].filter(d => knownSet.has(d));
+    const why = [];
+    while (need.size) {
+      let best = null, gain = 0;
+      for (const d of pool) {
+        const g = [...rulesOut(sol, c, d)].filter(w => need.has(w)).length + (NB[c].includes(d) ? 0.1 : 0);
+        if (g > gain) { gain = g; best = d; }
+      }
+      if (best === null) break;
+      for (const w of rulesOut(sol, c, best)) need.delete(w);
+      why.push(best); pool.splice(pool.indexOf(best), 1);
+    }
+    return why;
+  }
+  // For "only place in its ring": the visible neighbours that stop v from going in each other empty piece of the ring.
+  function whyRing(sol, knownSet, ringCells, cell, v) {
+    const blocked = ringCells.filter(d => d !== cell && !knownSet.has(d));
+    const blocks = e => blocked.filter(d => NB[d].includes(e) && Math.abs(sol[e] - v) <= 1);
+    const pool = [...new Set(blocked.flatMap(d => NB[d]))].filter(e => knownSet.has(e));
+    const left = new Set(blocked), why = [];
+    while (left.size) {
+      let best = null, gain = 0;
+      for (const e of pool) { const g = blocks(e).filter(d => left.has(d)).length; if (g > gain) { gain = g; best = e; } }
+      if (best === null) break;
+      for (const d of blocks(best)) left.delete(d);
+      why.push(best);
+    }
+    return why;
   }
 
   // Human-like difficulty. Each time simple reasoning stalls, the player needs a "what if" that breaks.
@@ -462,7 +502,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       pick: 'Elige un número para ese trozo.', noteMode: 'Modo notas: toca números para apuntar o quitar posibilidades.',
       selectFirst: 'Primero toca un trozo vacío.', good: 'Bien.',
       wrongNum: n => n === 1 ? 'Ese número no va ahí. Te queda 1 vida.' : `Ese número no va ahí. Te quedan ${n} vidas.`,
-      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Pista: aquí va un ${v}. Con él se desbloquean varios trozos.` : `Pista: este trozo solo puede ser un ${v}. Fíjate en sus vecinos y en su anillo.`,
+      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Pista: aquí va un ${v}. Con él se desbloquean varios trozos.` : kind === 'ring' ? `Pista: en este anillo, el ${v} solo cabe aquí. Los trozos en verde lo impiden en los demás huecos.` : `Pista: aquí solo cabe un ${v}. Los trozos en verde descartan todos los demás números.`,
       noHints: 'Ya has usado las 3 pistas.',
       inRing: 'Ese número ya está en este aro.',
       lostMsg: 'Te has quedado sin vidas. Mañana hay otro puzzle.',
@@ -494,7 +534,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       pick: 'Pick a number for that piece.', noteMode: 'Notes mode: tap numbers to add or remove candidates.',
       selectFirst: 'Tap an empty piece first.', good: 'Good.',
       wrongNum: n => n === 1 ? 'That number doesn’t go there. 1 life left.' : `That number doesn’t go there. ${n} lives left.`,
-      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Hint: a ${v} goes here. It unlocks several pieces.` : `Hint: this piece can only be a ${v}. Look at its neighbours and its ring.`,
+      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Hint: a ${v} goes here. It unlocks several pieces.` : kind === 'ring' ? `Hint: in this ring, the ${v} only fits here. The green pieces block it everywhere else.` : `Hint: only a ${v} fits here. The green pieces rule out every other number.`,
       noHints: 'You’ve used all 3 hints.',
       inRing: 'That number is already in this ring.',
       lostMsg: 'You’re out of lives. There’s a new puzzle tomorrow.',
@@ -511,7 +551,7 @@ if (typeof module !== 'undefined') module.exports = AN;
   const T = () => I18N[lang];
 
   const st = { key: TODAY, p: null, val: {}, notes: {}, sel: null, noteMode: false,
-    solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, wrong: null, glow: null, ms: 0, since: Date.now(), msg: ['start'] };
+    solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, wrong: null, glow: null, why: new Set(), ms: 0, since: Date.now(), msg: ['start'] };
 
   const cid = (k, i) => k * N + ((i % N) + N) % N;
   function el(tag, a, parent) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; }
@@ -568,13 +608,15 @@ if (typeof module !== 'undefined') module.exports = AN;
         const isWrong = st.wrong && st.wrong.id === id && !over();
         if (isWrong) fill = 'var(--badbg)';
         else if (st.glow === id) fill = 'var(--hi)';
+        else if (st.why.has(id)) fill = 'var(--goodbg)';
         else if (hiNb.has(id)) fill = 'var(--nb)';
         const g = el('g', { 'data-id': id }, svg);
         if (!over()) { g.setAttribute('class', 'pc'); g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button'); }
         g.setAttribute('aria-label', given ? t.fixed(p.sol[id]) : placed ? t.yours(st.val[id]) : t.empty);
         const isSel = st.sel === id && !over();
         el('path', { d: `M${a[0]} ${a[1]} A${r1} ${r1} 0 0 1 ${b[0]} ${b[1]} L${c[0]} ${c[1]} A${r0} ${r0} 0 0 0 ${d[0]} ${d[1]} Z`,
-          fill, stroke: isWrong ? 'var(--bad)' : isSel ? 'var(--accent)' : 'var(--ink)', 'stroke-width': isSel || isWrong ? 4 : 1.2 }, g);
+          fill, stroke: isWrong ? 'var(--bad)' : isSel ? 'var(--accent)' : st.why.has(id) ? 'var(--good)' : 'var(--ink)',
+          'stroke-width': isSel || isWrong ? 4 : st.why.has(id) ? 3 : 1.2 }, g);
         const m = pt((r0 + r1) / 2, th);
         const v = value(id) || (st.lost ? p.sol[id] : 0);
         if (isWrong) el('text', { x: m[0], y: m[1] + 10, 'text-anchor': 'middle', 'font-family': 'var(--display)', 'font-weight': 700, 'font-size': 28,
@@ -630,7 +672,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       track(`${kind === 'win' ? 'resuelto' : 'perdido'}/${st.p.level}/${st.key}`);
     }
     if (kind === 'win') st.solved = true; else st.lost = true;
-    st.firstEnd = firstTime; st.sel = null; st.wrong = null; st.glow = null; save();
+    st.firstEnd = firstTime; st.sel = null; st.wrong = null; st.glow = null; st.why = new Set(); save();
     $('playarea').hidden = true;
     $('result').hidden = false;
     $('timer').textContent = fmt(st.ms);
@@ -702,7 +744,8 @@ if (typeof module !== 'undefined') module.exports = AN;
     st.hints++; st.sel = null;
     if (st.wrong && st.wrong.id === h.cell) st.wrong = null;
     st.glow = h.cell; clearTimeout(glowTimer);
-    glowTimer = setTimeout(() => { st.glow = null; if (!over()) draw(); }, 1600);
+    st.why = new Set(h.why || []);   // the pieces that force the answer, shown in green for a few seconds
+    glowTimer = setTimeout(() => { st.glow = null; st.why = new Set(); if (!over()) draw(); }, 4000);
     if (place(h.cell, h.value)) return;
     draw(); save();
     say('hintMsg', { v: h.value, kind: h.kind }, 'tip');
@@ -779,7 +822,7 @@ if (typeof module !== 'undefined') module.exports = AN;
     const val = {};
     for (const id in (saved.val || {})) if (saved.val[id] === p.sol[id] && !p.giv.includes(+id)) val[id] = saved.val[id];
     const notes = {}; for (const id in (saved.notes || {})) notes[id] = new Set(saved.notes[id]);
-    Object.assign(st, { key, p, val, notes, sel: null, focus: null, wrong: null, glow: null,
+    Object.assign(st, { key, p, val, notes, sel: null, focus: null, wrong: null, glow: null, why: new Set(),
       solved: !!saved.solved, lost: !!saved.lost, firstEnd: false, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
       ms: saved.ms || 0, since: Date.now() });
     header();

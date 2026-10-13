@@ -1,6 +1,6 @@
-// Anillos core: deterministic daily puzzle generator for the ring "no consecutive" puzzle.
+// Anillos core: deterministic daily puzzle generator for Ringoku.
 // Board: 4 rings x 8 pieces, offset like bricks. Each ring holds 1..8 once;
-// touching pieces never hold consecutive numbers.
+// touching pieces never hold the same number or consecutive numbers.
 const AN = (function () {
   const N = 8, K = 4, C = N * K, FULL = 0x1FE;
   const cid = (k, i) => k * N + ((i % N) + N) % N;
@@ -31,7 +31,7 @@ const AN = (function () {
       const [c, v] = stack.pop();
       if (!((D[c] >> v) & 1)) return false;
       D[c] = 1 << v;
-      const bad = (1 << (v - 1)) | (1 << (v + 1));
+      const bad = (1 << (v - 1)) | (1 << v) | (1 << (v + 1));
       for (const d of NB[c]) if (D[d] & bad) {
         D[d] &= ~bad;
         if (!D[d]) return false;
@@ -92,31 +92,6 @@ const AN = (function () {
     for (const c of giv) if (!assign(D, c, sol[c])) return null;
     return D;
   }
-  function grade(sol, giv) {
-    const D = startState(sol, giv);
-    if (D.every(m => pc(m) === 1)) return { tier: 1, trials: 0 };
-    if (!fullProp(D)) return null;
-    if (D.every(m => pc(m) === 1)) return { tier: 2, trials: 0 };
-    let trials = 0;
-    while (!D.every(m => pc(m) === 1)) {
-      let prog = false;
-      outer: for (let c = 0; c < C; c++) {
-        if (pc(D[c]) === 1) continue;
-        for (let v = 1; v <= N; v++) {
-          if (!((D[c] >> v) & 1)) continue;
-          const E = D.slice();
-          if (!(assign(E, c, v) && fullProp(E))) {
-            D[c] &= ~(1 << v); trials++; prog = true;
-            if (pc(D[c]) === 1 && !assign(D, c, bitval(D[c]))) return null;
-            if (!fullProp(D)) return null;
-            break outer;
-          }
-        }
-      }
-      if (!prog) return null;
-    }
-    return { tier: 3, trials };
-  }
   function makePuzzle(rng) {
     const sol = randomSolution(rng);
     const giv = new Set(Array.from({ length: C }, (_, i) => i));
@@ -137,12 +112,12 @@ const AN = (function () {
     const empty = [];
     for (let c = 0; c < C; c++) if (!knownSet.has(c)) empty.push(c);
     if (!empty.length) return null;
-    // First-order candidates: only what the visible numbers rule out (same ring, consecutive neighbours).
+    // First-order candidates: only what the visible numbers rule out (same ring, equal or consecutive neighbours).
     const cand = new Array(C).fill(0);
     for (const c of empty) {
       let m = FULL;
       for (const d of RING[RINGOF[c]]) if (knownSet.has(d)) m &= ~(1 << sol[d]);
-      for (const d of NB[c]) if (knownSet.has(d)) m &= ~((1 << (sol[d] - 1)) | (1 << (sol[d] + 1)));
+      for (const d of NB[c]) if (knownSet.has(d)) m &= ~((1 << (sol[d] - 1)) | (1 << sol[d]) | (1 << (sol[d] + 1)));
       cand[c] = m & FULL;
     }
     const direct = empty.filter(c => pc(cand[c]) === 1);
@@ -164,29 +139,124 @@ const AN = (function () {
     return { cell: best, value: sol[best], kind: 'unlock' };
   }
 
-  // Difficulty by weekday (0 = Sunday): Mon/Tue easy, Wed/Thu medium, Fri/Sat hard, Sun very hard.
-  const BANDS = {
-    1: ['easy', g => g.tier <= 2], 2: ['easy', g => g.tier <= 2],
-    3: ['medium', g => g.tier === 3 && g.trials >= 3 && g.trials <= 7], 4: ['medium', g => g.tier === 3 && g.trials >= 3 && g.trials <= 7],
-    5: ['hard', g => g.tier === 3 && g.trials >= 10 && g.trials <= 18], 6: ['hard', g => g.tier === 3 && g.trials >= 10 && g.trials <= 18],
-    0: ['expert', g => g.tier === 3 && g.trials >= 19],
+  // Human-like difficulty. Each time simple reasoning stalls, the player needs a "what if" that breaks.
+  // Cost = length of the easiest contradiction chain + a bonus when such breakthroughs are rare (hard to spot).
+  function humanScore(sol, giv, cap = Infinity) {
+    const D = startState(sol, giv);
+    if (!D || !fullProp(D)) return null;
+    let total = 0;
+    while (!D.every(m => pc(m) === 1)) {
+      if (total >= cap) return total + 1;   // already too hard for this level: stop early
+      const base = D.filter(m => pc(m) === 1).length;
+      let best = 99, options = 0, pick = null;
+      for (let c = 0; c < C; c++) if (pc(D[c]) > 1) for (let v = 1; v <= N; v++) {
+        if (!((D[c] >> v) & 1) || v === sol[c]) continue;
+        const E = D.slice();
+        if (assign(E, c, v) && fullProp(E)) continue;
+        const depth = E.filter(m => pc(m) === 1).length - base;
+        options++;
+        if (depth < best) { best = depth; pick = [c, v]; }
+      }
+      if (!pick) return null;
+      total += Math.max(1, best) + (options < 4 ? 3 : options < 10 ? 1 : 0);
+      D[pick[0]] &= ~(1 << pick[1]);
+      if (pc(D[pick[0]]) === 1 && !assign(D, pick[0], bitval(D[pick[0]]))) return null;
+      if (!fullProp(D)) return null;
+    }
+    return total;
+  }
+
+  // Average number of pieces that can be placed with simple reasoning at each step of a simple-only solve.
+  // Wide (many options) feels easy; narrow (you have to hunt for the one move) feels harder.
+  function simpleFan(sol, giv) {
+    const known = new Set(giv); let steps = 0, sum = 0;
+    while (known.size < C) {
+      const cand = new Array(C).fill(0), moves = new Map();
+      for (let c = 0; c < C; c++) if (!known.has(c)) {
+        let m = FULL;
+        for (const d of RING[RINGOF[c]]) if (known.has(d)) m &= ~(1 << sol[d]);
+        for (const d of NB[c]) if (known.has(d)) m &= ~((1 << (sol[d] - 1)) | (1 << sol[d]) | (1 << (sol[d] + 1)));
+        cand[c] = m & FULL;
+        if (pc(cand[c]) === 1) moves.set(c, 1);
+      }
+      for (const ringCells of RING) for (let v = 1; v <= N; v++) {
+        if (ringCells.some(d => known.has(d) && sol[d] === v)) continue;
+        const spots = ringCells.filter(d => !known.has(d) && (cand[d] >> v) & 1);
+        if (spots.length === 1) moves.set(spots[0], 1);
+      }
+      if (!moves.size) return null;
+      sum += moves.size; steps++;
+      known.add(moves.keys().next().value);
+    }
+    return sum / steps;
+  }
+  // Number of pieces a player can place with simple deductions before the first real stall.
+  function openingRun(sol, giv) {
+    const known = [...giv]; let run = 0;
+    for (;;) { const h = hint(sol, known); if (!h || h.kind === 'unlock') return run; known.push(h.cell); run++; }
+  }
+  // Add back givens (one at a time) until the opening reaches the target.
+  function soften(rng, p, target) {
+    let giv = [...p.giv], run = openingRun(p.sol, giv);
+    while (run < target) {
+      const cands = shuffle(rng, Array.from({ length: C }, (_, i) => i).filter(c => !giv.includes(c)));
+      let best = null, bestRun = run;
+      for (const c of cands) { const r = openingRun(p.sol, giv.concat(c)); if (r > bestRun) { best = c; bestRun = r; if (r >= target) break; } }
+      if (best === null) return null;
+      giv = giv.concat(best).sort((a, b) => a - b); run = bestRun;
+    }
+    return { sol: p.sol, giv };
+  }
+  // Difficulty by weekday (0 = Sunday). h = humanScore, fan = simple moves per step (null = notes needed).
+  // Mon/Tue easy: only simple deductions, many moves at hand. Wed/Thu medium: still no "what if",
+  // but few moves at a time or notes needed. Fri/Sat hard: a few short "what if" steps. Sun expert: longer ones.
+  const LEVELS = {
+    easy:   { max: 0,  ok: (h, fan) => h === 0 && fan !== null && fan >= 3, open: 0 },
+    medium: { max: 0,  ok: (h, fan) => h === 0 && (fan === null || fan <= 2.5), open: 0 },
+    hard:   { max: 12, ok: h => h >= 3, open: 4 },
+    expert: { max: 35, ok: h => h >= 15, open: 3 },
   };
+  const DAYLEVEL = ['expert', 'easy', 'easy', 'medium', 'medium', 'hard', 'hard'];
+  // Start from a minimal (usually very hard) puzzle and add givens back until it fits the level.
+  function tune(rng, p, L) {
+    let giv = [...p.giv];
+    for (;;) {
+      const h = humanScore(p.sol, giv, L.max);
+      if (h === null) return null;
+      if (h <= L.max) {
+        const fan = h === 0 ? simpleFan(p.sol, giv) : null;
+        if (L.ok(h, fan)) return { sol: p.sol, giv, h };
+        if (L.max > 0) return null;                    // overshot: now too easy for this level
+        if (fan !== null && fan > 2.5 && fan < 3 || L === LEVELS.medium) return null;
+        // easy but still too narrow: keep adding givens (widens the choice)
+      }
+      const free = Array.from({ length: C }, (_, i) => i).filter(c => !giv.includes(c));
+      if (!free.length || giv.length >= 14) return null;   // keep the board from looking pre-solved
+      giv = giv.concat(free[Math.floor(rng() * free.length)]).sort((a, b) => a - b);
+    }
+  }
   const LAUNCH = Date.UTC(2026, 9, 12);   // Puzzle nº 1 = 12 Oct 2026
   function parseKey(key) { const [y, m, d] = key.split('-').map(Number); return Date.UTC(y, m - 1, d); }
   function keyOf(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
   function daily(key) {
-    const t = parseKey(key), wd = new Date(t).getUTCDay();
-    const [level, ok] = BANDS[wd];
+    const t = parseKey(key), level = DAYLEVEL[new Date(t).getUTCDay()], L = LEVELS[level];
     const seed = Number(key.replace(/-/g, ''));
     const rng = mulberry32(Math.imul(seed, 2654435761) >>> 0);
-    let fallback = null;
+    const number = Math.round((t - LAUNCH) / 86400000) + 1;
+    let last = null;
     for (let attempt = 0; attempt < 400; attempt++) {
-      const p = makePuzzle(rng), g = grade(p.sol, p.giv);
-      if (!g) continue;
-      if (ok(g)) return { ...p, level, trials: g.trials, number: Math.round((t - LAUNCH) / 86400000) + 1, dateKey: key };
-      if (!fallback || (g.tier === 3 && g.trials > fallback.trials)) fallback = { ...p, trials: g.trials };
+      let q = tune(rng, makePuzzle(rng), L);
+      if (!q) continue;
+      last = q;
+      if (L.open) {
+        const s2 = soften(rng, q, L.open); if (!s2) continue;
+        const h2 = humanScore(s2.sol, s2.giv, L.max);
+        if (h2 === null || h2 > L.max || !L.ok(h2, null)) continue;
+        q = { ...s2, h: h2 };
+      }
+      return { sol: q.sol, giv: q.giv, level, trials: q.h, number, dateKey: key };
     }
-    return { ...fallback, level, number: Math.round((t - LAUNCH) / 86400000) + 1, dateKey: key };
+    return { sol: last.sol, giv: last.giv, level, trials: last.h, number, dateKey: key };
   }
   return { N, K, C, NB, RING, daily, keyOf, parseKey, LAUNCH, count, startState, hint };
 })();

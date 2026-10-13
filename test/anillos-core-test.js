@@ -7,7 +7,7 @@ function valid(sol) {
     const r = sol.slice(k * N, (k + 1) * N).slice().sort((a, b) => a - b);
     if (r.join() !== '1,2,3,4,5,6,7,8') return false;
   }
-  for (let c = 0; c < C; c++) for (const d of NB[c]) if (Math.abs(sol[c] - sol[d]) === 1) return false;
+  for (let c = 0; c < C; c++) for (const d of NB[c]) if (Math.abs(sol[c] - sol[d]) <= 1) return false;
   return true;
 }
 function naiveCount(sol, giv) {
@@ -17,7 +17,7 @@ function naiveCount(sol, giv) {
   const ok = (c, v) => {
     const k = Math.floor(c / N);
     for (let i = 0; i < N; i++) if (b[k * N + i] === v) return false;
-    for (const d of NB[c]) if (b[d] && Math.abs(b[d] - v) === 1) return false;
+    for (const d of NB[c]) if (b[d] && Math.abs(b[d] - v) <= 1) return false;
     return true;
   };
   (function rec(j) {

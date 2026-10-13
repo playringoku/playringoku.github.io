@@ -18,7 +18,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Ringoku: a new circular logic puzzle every day. Fill each ring with 1 to 8, no repeats, and no consecutive numbers touching. Un pasatiempo de lógica nuevo cada día.">
+<meta name="description" content="Ringoku: a new circular logic puzzle every day. Fill each ring with 1 to 8, no repeats, and touching pieces never hold the same or consecutive numbers. Un pasatiempo de lógica nuevo cada día.">
 <meta property="og:title" content="Ringoku · the daily circular puzzle">
 <meta property="og:description" content="A new circular logic puzzle every day · Un puzzle de lógica circular nuevo cada día.">
 <meta property="og:type" content="website">

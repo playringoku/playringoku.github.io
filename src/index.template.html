@@ -144,16 +144,18 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   const $ = id => document.getElementById(id);
   const svg = $('board'), statusEl = $('status');
   let TODAY = AN.keyOf(new Date());   // updated by checkNewDay() if the tab stays open past midnight
+  // v2: the rule changed on 13 Oct 2026, so progress saved for the old puzzles is not reused.
+  // Language and help preferences carry over from v1.
   const store = {
-    get(k) { try { return JSON.parse(localStorage.getItem('anillos:v1:' + k)); } catch (e) { return null; } },
-    set(k, v) { try { localStorage.setItem('anillos:v1:' + k, JSON.stringify(v)); } catch (e) {} },
+    get(k) { try { const v = localStorage.getItem('anillos:v2:' + k) ?? (k === 'lang' || k === 'help' ? localStorage.getItem('anillos:v1:' + k) : null); return JSON.parse(v); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem('anillos:v2:' + k, JSON.stringify(v)); } catch (e) {} },
   };
 
   const I18N = {
     es: {
       howto: 'Cómo se juega', rules: 'Reglas',
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
-      r2: 'Dos trozos que se tocan nunca llevan números consecutivos: un 4 no puede tocar ni un 3 ni un 5.',
+      r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
       r3: 'Tienes 3 vidas: cada número equivocado resta una. Las notas no cuentan.',
       rhelp: 'Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro. Al tocar un trozo se resaltan en azul los 6 que toca. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir (3 por puzzle). Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
@@ -184,7 +186,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     en: {
       howto: 'How to play', rules: 'Rules',
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
-      r2: 'Two touching pieces never hold consecutive numbers: a 4 can’t touch a 3 or a 5.',
+      r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
       r3: 'You have 3 lives: each wrong number costs one. Notes don’t count.',
       rhelp: 'Each piece touches 6 others: 2 beside it, 2 in the ring outside and 2 in the ring inside. Tapping a piece highlights the 6 pieces it touches in blue. Use Notes to pencil in candidates. If you get stuck, Hint shows you the next piece that can be deduced (3 per puzzle). A new puzzle every day: easy on Monday and harder each day until Sunday.',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
@@ -350,12 +352,12 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     const f = svg.querySelector(`[data-id="${id}"]`); if (f) f.focus({ preventScroll: true });
   });
 
-  // When a number is placed, tidy the notes it rules out (same ring, consecutive neighbours).
+  // When a number is placed, tidy the notes it rules out (same ring; equal or consecutive neighbours).
   function tidyNotes(id, v) {
     delete st.notes[id];
     const k = Math.floor(id / N);
     for (let i = 0; i < N; i++) { const d = cid(k, i); if (st.notes[d]) st.notes[d].delete(v); }
-    for (const d of NB[id]) if (st.notes[d]) { st.notes[d].delete(v - 1); st.notes[d].delete(v + 1); }
+    for (const d of NB[id]) if (st.notes[d]) { st.notes[d].delete(v - 1); st.notes[d].delete(v); st.notes[d].delete(v + 1); }
   }
   function place(id, v) {
     st.val[id] = v; tidyNotes(id, v);

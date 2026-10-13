@@ -5,7 +5,7 @@ Un pasatiempo de lógica circular con un puzzle nuevo cada día. Disponible en e
 ## Reglas
 
 1. Cada anillo lleva los números del 1 al 8, sin repetir.
-2. Dos trozos que se tocan nunca llevan números consecutivos (un 4 no puede tocar ni un 3 ni un 5).
+2. Dos trozos que se tocan nunca llevan el mismo número ni números seguidos (un 4 no puede tocar ni un 3, ni un 4, ni un 5).
 
 Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro (los anillos están desplazados medio trozo, como ladrillos).
 
@@ -14,7 +14,13 @@ Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro (l
 ## Cómo funciona el puzzle diario
 
 - La página genera el puzzle a partir de la fecha. La misma fecha produce siempre el mismo puzzle, así que todo el mundo juega el mismo ese día. No hay servidor.
-- La dificultad depende del día de la semana: lunes y martes fácil, miércoles y jueves medio, viernes y sábado difícil, domingo muy difícil.
+- La dificultad depende del día de la semana:
+  - Lunes y martes, fácil: se resuelve solo con deducciones sencillas y siempre hay varias jugadas a la vista.
+  - Miércoles y jueves, medio: tampoco hace falta probar nada, pero hay pocas jugadas disponibles a la vez.
+  - Viernes y sábado, difícil: hacen falta algunos razonamientos cortos del tipo «si aquí fuera un 3…».
+  - Domingo, muy difícil: razonamientos más largos.
+  El generador mide la dificultad imitando a una persona (`humanScore` y `simpleFan` en `src/anillos-core.js`) y ajusta cada puzzle añadiendo números de partida hasta que encaja con su nivel. En difícil y muy difícil se garantiza además una entrada con unas cuantas jugadas sencillas.
+- El 13 de octubre de 2026 cambió la regla 2 (antes solo se prohibían los números seguidos). Todos los puzzles, incluidos los nº 1 y 2, se generan ya con la regla nueva, y el progreso guardado empezó de cero (clave `anillos:v2:` en `localStorage`).
 - Todos los puzzles tienen una única solución y se resuelven razonando.
 - El progreso, la racha y los tiempos se guardan en el navegador de cada jugador (`localStorage`). Van ligados al dominio: si la web cambia de dominio, se pierden.
 - El puzzle nº 1 corresponde al 12 de octubre de 2026.

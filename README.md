@@ -7,7 +7,7 @@ Un pasatiempo de lógica circular con un puzzle nuevo cada día. Disponible en e
 1. Cada anillo lleva los números del 1 al 8, sin repetir.
 2. Dos trozos que se tocan nunca llevan el mismo número ni números seguidos (un 4 no puede tocar ni un 3, ni un 4, ni un 5).
 
-Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro (los anillos están desplazados medio trozo, como ladrillos).
+Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino (los anillos están desplazados medio trozo, como ladrillos): 6 en los dos anillos centrales y 4 en el exterior y el interior.
 
 **Vidas y pistas:** hay 3 vidas; cada número equivocado resta una y a la tercera se pierde el puzzle del día (se muestra la solución y la racha vuelve a cero). Las notas no cuentan. Hay 3 pistas por puzzle: cada una revela el siguiente trozo que se puede deducir con lo que hay en el tablero (`AN.hint` en `src/anillos-core.js`). El resultado para compartir indica vidas y pistas usadas, y un puzzle sin fallos ni pistas cuenta como perfecto.
 
@@ -47,3 +47,16 @@ Cambiar el generador (`src/anillos-core.js`) cambia los puzzles de todos los dí
 ## Publicar
 
 La web se publica automáticamente con GitHub Pages desde la rama `main` (carpeta raíz) en **https://playringoku.github.io**. Si algún día deja de publicarse, revisa **Settings → Pages → Build and deployment → Source: Deploy from a branch**, rama `main`, carpeta `/ (root)`.
+
+## Libro
+
+`book/` genera el libro de pasatiempos para Amazon KDP (tapa blanda 8,5 × 11 in, interior en blanco y negro), en inglés y en español:
+
+```bash
+node book/generate.js        # 150 puzzles exclusivos (book/puzzles.json), distintos de los diarios
+python3 book/make-fonts.py   # copia Inter en TrueType para incrustarla bien en el PDF
+node book/build.js           # interiores: book/out/ringoku-interior-en.pdf y -es.pdf
+node book/cover.js           # cubiertas completas con lomo: book/out/ringoku-cover-en.pdf y -es.pdf
+```
+
+Los PDF no se suben al repositorio (`book/out/` está en `.gitignore`), porque la web es pública.

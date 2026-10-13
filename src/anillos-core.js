@@ -278,11 +278,9 @@ const AN = (function () {
   const LAUNCH = Date.UTC(2026, 9, 12);   // Puzzle nº 1 = 12 Oct 2026
   function parseKey(key) { const [y, m, d] = key.split('-').map(Number); return Date.UTC(y, m - 1, d); }
   function keyOf(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
-  function daily(key) {
-    const t = parseKey(key), level = DAYLEVEL[new Date(t).getUTCDay()], L = LEVELS[level];
-    const seed = Number(key.replace(/-/g, ''));
-    const rng = mulberry32(Math.imul(seed, 2654435761) >>> 0);
-    const number = Math.round((t - LAUNCH) / 86400000) + 1;
+  // One puzzle of the given level from a numeric seed (used by the daily puzzle and by the printed books).
+  function generate(seed, level) {
+    const L = LEVELS[level], rng = mulberry32(Math.imul(seed, 2654435761) >>> 0);
     let last = null;
     for (let attempt = 0; attempt < 400; attempt++) {
       let q = tune(rng, makePuzzle(rng), L);
@@ -294,10 +292,15 @@ const AN = (function () {
         if (h2 === null || h2 > L.max || !L.ok(h2, null)) continue;
         q = { ...s2, h: h2 };
       }
-      return { sol: q.sol, giv: q.giv, level, trials: q.h, number, dateKey: key };
+      return q;
     }
-    return { sol: last.sol, giv: last.giv, level, trials: last.h, number, dateKey: key };
+    return last;
   }
-  return { N, K, C, NB, RING, daily, keyOf, parseKey, LAUNCH, count, startState, hint };
+  function daily(key) {
+    const t = parseKey(key), level = DAYLEVEL[new Date(t).getUTCDay()];
+    const q = generate(Number(key.replace(/-/g, '')), level);
+    return { sol: q.sol, giv: q.giv, level, trials: q.h, number: Math.round((t - LAUNCH) / 86400000) + 1, dateKey: key };
+  }
+  return { N, K, C, NB, RING, daily, generate, keyOf, parseKey, LAUNCH, count, startState, hint };
 })();
 if (typeof module !== 'undefined') module.exports = AN;

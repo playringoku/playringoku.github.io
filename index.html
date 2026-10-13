@@ -439,11 +439,9 @@ const AN = (function () {
   const LAUNCH = Date.UTC(2026, 9, 12);   // Puzzle nº 1 = 12 Oct 2026
   function parseKey(key) { const [y, m, d] = key.split('-').map(Number); return Date.UTC(y, m - 1, d); }
   function keyOf(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
-  function daily(key) {
-    const t = parseKey(key), level = DAYLEVEL[new Date(t).getUTCDay()], L = LEVELS[level];
-    const seed = Number(key.replace(/-/g, ''));
-    const rng = mulberry32(Math.imul(seed, 2654435761) >>> 0);
-    const number = Math.round((t - LAUNCH) / 86400000) + 1;
+  // One puzzle of the given level from a numeric seed (used by the daily puzzle and by the printed books).
+  function generate(seed, level) {
+    const L = LEVELS[level], rng = mulberry32(Math.imul(seed, 2654435761) >>> 0);
     let last = null;
     for (let attempt = 0; attempt < 400; attempt++) {
       let q = tune(rng, makePuzzle(rng), L);
@@ -455,11 +453,16 @@ const AN = (function () {
         if (h2 === null || h2 > L.max || !L.ok(h2, null)) continue;
         q = { ...s2, h: h2 };
       }
-      return { sol: q.sol, giv: q.giv, level, trials: q.h, number, dateKey: key };
+      return q;
     }
-    return { sol: last.sol, giv: last.giv, level, trials: last.h, number, dateKey: key };
+    return last;
   }
-  return { N, K, C, NB, RING, daily, keyOf, parseKey, LAUNCH, count, startState, hint };
+  function daily(key) {
+    const t = parseKey(key), level = DAYLEVEL[new Date(t).getUTCDay()];
+    const q = generate(Number(key.replace(/-/g, '')), level);
+    return { sol: q.sol, giv: q.giv, level, trials: q.h, number: Math.round((t - LAUNCH) / 86400000) + 1, dateKey: key };
+  }
+  return { N, K, C, NB, RING, daily, generate, keyOf, parseKey, LAUNCH, count, startState, hint };
 })();
 if (typeof module !== 'undefined') module.exports = AN;
 
@@ -484,7 +487,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
       r3: 'Tienes 3 vidas: cada número equivocado resta una. Las notas no cuentan.',
-      rhelp: 'Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro. Al tocar un trozo se resaltan en azul los 6 que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
+      rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
       easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil',
@@ -524,7 +527,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
       r3: 'You have 3 lives: each wrong number costs one. Notes don’t count.',
-      rhelp: 'Each piece touches 6 others: 2 beside it, 2 in the ring outside and 2 in the ring inside. Tapping a piece highlights the 6 pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday.',
+      rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday.',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
       easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',

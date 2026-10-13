@@ -85,7 +85,7 @@ body { margin: 0; width: ${W}in; height: ${H}in; background: #1E2630; color: #F3
 .back ul { margin: 0 0 20pt; padding-left: 20pt; } .back li { font-size: 15pt; line-height: 1.55; color: #E3E7EC; }
 .web { font-weight: 700; font-size: 15pt; line-height: 1.4; color: #BFD9F2; max-width: 5in; }
 `;
-  const backHtml = `<h2>${t.title}</h2>` + t.back.map(x => x === '__RULES__'
+  const backHtml = `<h2>${logoTitle('cover')}</h2>` + t.back.map(x => x === '__RULES__'
     ? `<div class="rules"><b>${esc(t.rulesTitle)}</b><ol>${t.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ol></div>`
     : `<p>${esc(x)}</p>`).join('') +
     `<h3>${esc(t.inside)}</h3><ul>${t.insideList.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div class="web">${esc(t.web)}</div>`;

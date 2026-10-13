@@ -30,8 +30,12 @@ const T = {
       'Check each ring as a whole: if a number fits in only one of its gaps, it must go there.',
       'Pencil small candidates in a corner of the piece and cross them out as you go.',
       'Pieces in the outer and inner rings touch only 4 others; those in the two middle rings touch 6.'],
-    contents: 'Contents', solutionsTitle: 'Solutions', hintsTitle: 'Hints for Hard and Very hard',
-    hintsIntro: 'Stuck but don’t want to see the whole solution? Each Hard and Very hard puzzle has one hint for every point where simple deductions run out. Hint A gives you one key number that gets you moving again; look at Hint B only if you get stuck a second time. The grey numbers are the ones printed in the puzzle, to help you find your place.',
+    contents: 'Contents', solutionsTitle: 'Solutions', hintsTitle: 'Hints',
+    hintsA: 'Hints A', hintsB: 'Hints B',
+    hintsAIntro: 'Stuck on a Hard or Very hard puzzle but don’t want to see the whole solution? Each board below reveals one key number (shaded) that gets you moving again. The grey numbers are the ones printed in the puzzle, to help you find your place. A few puzzles have a second sticking point: their Hint B is on page __HB__, kept apart so you don’t see it by accident.',
+    hintsBIntro: 'A second hint, only for the puzzles that have a second sticking point. Look here only after using Hint A.',
+    hintsNote: 'Stuck on a Hard or Very hard puzzle? You don’t need to look at the solution: on page __HA__ there is a hint that reveals one key number (Hints A), and on page __HB__ a second hint for the few puzzles that need one (Hints B).',
+    tocHintsA: 'Hints A · Hard and Very hard', tocHintsB: 'Hints B · second hint',
     hint: 'Hint',
     levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Very hard' },
     levelNote: { easy: 'Simple deductions, many moves available.', medium: 'Still no guessing, but fewer moves at a time.', hard: 'Short “what if…” chains of reasoning.', expert: 'Longer chains of reasoning. Take your time.' },
@@ -54,8 +58,12 @@ const T = {
       'Mira cada anillo entero: si un número solo cabe en uno de sus huecos, tiene que ir ahí.',
       'Apunta candidatos pequeños en una esquina del trozo y ve tachándolos.',
       'Los trozos del anillo exterior y del interior tocan solo a 4; los de los dos anillos centrales, a 6.'],
-    contents: 'Contenido', solutionsTitle: 'Soluciones', hintsTitle: 'Pistas para los difíciles y muy difíciles',
-    hintsIntro: '¿Te has atascado pero no quieres ver la solución entera? Cada puzzle difícil y muy difícil tiene una pista por cada punto en que se acaban las deducciones sencillas. La pista A te da un número clave para volver a avanzar; mira la pista B solo si te atascas por segunda vez. Los números grises son los que vienen impresos en el puzzle, para que te ubiques.',
+    contents: 'Contenido', solutionsTitle: 'Soluciones', hintsTitle: 'Pistas',
+    hintsA: 'Pistas A', hintsB: 'Pistas B',
+    hintsAIntro: '¿Te has atascado en un difícil o muy difícil pero no quieres ver la solución entera? Cada tablero de esta sección te revela un número clave (sombreado) para volver a avanzar. Los números grises son los que vienen impresos en el puzzle, para que te ubiques. Algunos puzzles tienen un segundo atasco: su pista B está en la página __HB__, aparte para que no la veas sin querer.',
+    hintsBIntro: 'Una segunda pista, solo para los puzzles que tienen un segundo atasco. Mírala solo después de usar la pista A.',
+    hintsNote: '¿Te atascas en un difícil o muy difícil? No hace falta mirar la solución: en la página __HA__ tienes una pista que te revela un número clave (pistas A), y en la página __HB__ una segunda pista para los pocos puzzles que la necesitan (pistas B).',
+    tocHintsA: 'Pistas A · difíciles y muy difíciles', tocHintsB: 'Pistas B · segunda pista',
     hint: 'Pista',
     levels: { easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil' },
     levelNote: { easy: 'Deducciones sencillas, con muchas jugadas a la vista.', medium: 'Sin adivinar, pero con pocas jugadas a la vez.', hard: 'Razonamientos cortos del tipo «si aquí fuera un…».', expert: 'Razonamientos más largos. Tómatelo con calma.' },
@@ -172,14 +180,11 @@ ul { padding-left: 18pt; margin: 0; }
 .sol b { font-size: 10pt; margin-bottom: 2pt; }
 .sol svg { flex: 1; min-height: 0; width: 100%; }
 .hintintro { font-size: 11pt; color: #333; margin-bottom: 8pt; }
-.hints { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 3.05in; gap: 0.12in 0.35in; }
-.hint { display: flex; flex-direction: column; min-height: 0; border-top: 1px solid #ccc; padding-top: 4pt; }
-.hint b { font-size: 10pt; margin-bottom: 2pt; }
-.minis { display: flex; gap: 0.15in; flex: 1; min-height: 0; }
-.minis figure { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; flex: 1; max-width: 1.65in; }
-.minis svg { width: 100%; height: auto; }
-.minis.one figure { max-width: 2.45in; }
-.minis figcaption { font-size: 10pt; font-weight: 700; color: #222; margin-top: 3pt; }
+.hints { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 2.3in; gap: 0.08in 0.25in; }
+.hint { display: flex; flex-direction: column; align-items: center; min-height: 0; border-top: 1px solid #ccc; padding-top: 4pt; }
+.hint b { font-size: 10pt; margin-bottom: 3pt; align-self: flex-start; }
+.hint svg { flex: 1; min-height: 0; width: 100%; }
+.note { font-size: 11pt; background: #EFEFEF; border-left: 3pt solid #111; padding: 6pt 10pt; }
 .end { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8pt; }
 .end h2 { font-size: 28pt; } .end .url { font-size: 22pt; font-weight: 800; margin: 4pt 0 10pt; }
 `;
@@ -195,7 +200,8 @@ function interior(lang) {
     <figure class="fig small">${neighboursDemo()}<figcaption>${esc(t.touchCap)}</figcaption></figure>
     <h3>${t.exTitle}</h3>
     <figure class="fig">${ex.svg}<figcaption><b>${esc(t.exCap)}</b><br>${esc(ex.text)}</figcaption></figure>
-    <p>${esc(t.unique)}</p>`);
+    <p>${esc(t.unique)}</p>
+    <p class="note">${esc(t.hintsNote)}</p>`);
   page('__TOC__');
   const levelStart = {};
   for (let i = 0; i < PUZ.length; i += 2) {
@@ -206,12 +212,19 @@ function interior(lang) {
     const one = p => p ? `<div class="pz"><div class="pzh"><span>${t.puzzle} ${p.n} · ${t.levels[p.level]}</span></div>${board({ values: givenVals(p), bold: new Set(p.giv) })}</div>` : '<div class="pz"></div>';
     page(`${head}<div class="two">${one(a)}${one(b)}</div>`, head ? 'with-head' : '');
   }
-  const hintStart = pages.length + 1, withHints = PUZ.filter(p => p.level === 'hard' || p.level === 'expert');
-  for (let i = 0; i < withHints.length; ) {
-    const size = i === 0 ? 4 : 6, chunk = withHints.slice(i, i + size); i += size;
-    page(`${i === size ? `<h2>${esc(t.hintsTitle)}</h2><p class="hintintro">${esc(t.hintsIntro)}</p>` : ''}<div class="hints">${chunk.map(p =>
-      `<div class="hint"><b>${t.puzzle} ${p.n}</b><div class="minis${keyPieces(p).length === 1 ? ' one' : ''}">${keyPieces(p).map((c, j) => `<figure>${board({ values: { ...givenVals(p), [c]: p.sol[c] }, bold: new Set([c]), fill: { [c]: '#CFCFCF' }, stroke: 1.4 })}<figcaption>${t.hint} ${'AB'[j]}</figcaption></figure>`).join('')}</div></div>`).join('')}</div>`, i === size ? 'hints-first' : '');
-  }
+  // Hints: all the A hints first, then the B hints on separate pages, so nobody sees a B hint by accident.
+  const keys = new Map(PUZ.filter(p => p.level === 'hard' || p.level === 'expert').map(p => [p, keyPieces(p)]));
+  const hintCell = (p, c, label) => `<div class="hint"><b>${t.puzzle} ${p.n} · ${label}</b>${board({ values: { ...givenVals(p), [c]: p.sol[c] }, bold: new Set([c]), fill: { [c]: '#CFCFCF' }, stroke: 1.4 })}</div>`;
+  const hintPages = (items, title, intro) => {
+    const start = pages.length + 1;
+    for (let i = 0; i < items.length; ) {
+      const first = i === 0, size = first ? 9 : 12, chunk = items.slice(i, i + size); i += size;
+      page(`${first ? `<h2>${esc(title)}</h2><p class="hintintro">${esc(intro)}</p>` : ''}<div class="hints">${chunk.join('')}</div>`, first ? 'hints-first' : '');
+    }
+    return start;
+  };
+  const hintA = hintPages([...keys].map(([p, k]) => hintCell(p, k[0], `${t.hint} A`)), t.hintsA, t.hintsAIntro);
+  const hintB = hintPages([...keys].filter(([, k]) => k.length > 1).map(([p, k]) => hintCell(p, k[1], `${t.hint} B`)), t.hintsB, t.hintsBIntro);
   const solStart = pages.length + 1;
   for (let i = 0; i < PUZ.length; i += 6) {
     const chunk = PUZ.slice(i, i + 6);
@@ -221,11 +234,13 @@ function interior(lang) {
   if (pages.length % 2) page('', '', false);   // KDP prefers an even page count
   const toc = `<h2>${t.contents}</h2><table class="toc">${['easy', 'medium', 'hard', 'expert'].map(l => {
     const ps = PUZ.filter(p => p.level === l); return `<tr><td>${t.levels[l]} · ${t.puzzle} ${ps[0].n}–${ps[ps.length - 1].n}</td><td>${levelStart[l]}</td></tr>`; }).join('')}
-    <tr><td>${esc(t.hintsTitle)}</td><td>${hintStart}</td></tr>
+    <tr><td>${esc(t.tocHintsA)}</td><td>${hintA}</td></tr>
+    <tr><td>${esc(t.tocHintsB)}</td><td>${hintB}</td></tr>
     <tr><td>${t.solutionsTitle}</td><td>${solStart}</td></tr></table>
-    <h3>${t.tipsTitle}</h3><ul>${t.tips.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    <h3>${t.tipsTitle}</h3><ul>${[...t.tips, t.hintsNote].map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
   const html = `<!doctype html><html lang="${lang}"><meta charset="utf-8"><style>${CSS}</style><body>` +
-    pages.map((p, i) => `<section class="page ${p.cls}">${p.html === '__TOC__' ? toc : p.html}${p.num ? `<div class="num">${i + 1}</div>` : ''}</section>`).join('') + '</body></html>';
+    pages.map((p, i) => `<section class="page ${p.cls}">${p.html === '__TOC__' ? toc : p.html}${p.num ? `<div class="num">${i + 1}</div>` : ''}</section>`).join('')
+      .replace(/__HA__/g, hintA).replace(/__HB__/g, hintB) + '</body></html>';
   return { html, count: pages.length };
 }
 

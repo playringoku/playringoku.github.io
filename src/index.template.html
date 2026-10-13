@@ -50,6 +50,7 @@ details p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
 svg#board { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 auto; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 .pad { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .pad button { font-family: var(--display); font-size: 20px; padding: 12px 0; }
+.pad button.used:disabled { opacity: .22; text-decoration: line-through; }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 button { font: inherit; font-weight: 700; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; }
 button:hover:not(:disabled) { border-color: var(--ink); }
@@ -157,7 +158,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
       r3: 'Tienes 3 vidas: cada número equivocado resta una. Las notas no cuentan.',
-      rhelp: 'Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro. Al tocar un trozo se resaltan en azul los 6 que toca. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir (3 por puzzle). Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
+      rhelp: 'Cada trozo toca 6: 2 a sus lados, 2 en el anillo de fuera y 2 en el de dentro. Al tocar un trozo se resaltan en azul los 6 que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir (3 por puzzle). Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
       easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil',
@@ -178,6 +179,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       wrongNum: n => n === 1 ? 'Ese número no va ahí. Te queda 1 vida.' : `Ese número no va ahí. Te quedan ${n} vidas.`,
       hintMsg: ({ v, kind }) => kind === 'unlock' ? `Pista: aquí va un ${v}. Con él se desbloquean varios trozos.` : `Pista: este trozo solo puede ser un ${v}. Fíjate en sus vecinos y en su anillo.`,
       noHints: 'Ya has usado las 3 pistas.',
+      inRing: 'Ese número ya está en este aro.',
       lostMsg: 'Te has quedado sin vidas. Mañana hay otro puzzle.',
       newDay: 'Ha empezado un nuevo día: aquí tienes el puzzle de hoy.',
       newAvail: 'Ya hay puzzle nuevo de hoy. Cuando acabes este, pulsa › para jugarlo.',
@@ -188,7 +190,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
       r3: 'You have 3 lives: each wrong number costs one. Notes don’t count.',
-      rhelp: 'Each piece touches 6 others: 2 beside it, 2 in the ring outside and 2 in the ring inside. Tapping a piece highlights the 6 pieces it touches in blue. Use Notes to pencil in candidates. If you get stuck, Hint shows you the next piece that can be deduced (3 per puzzle). A new puzzle every day: easy on Monday and harder each day until Sunday.',
+      rhelp: 'Each piece touches 6 others: 2 beside it, 2 in the ring outside and 2 in the ring inside. Tapping a piece highlights the 6 pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint shows you the next piece that can be deduced (3 per puzzle). A new puzzle every day: easy on Monday and harder each day until Sunday.',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
       easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',
@@ -209,6 +211,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       wrongNum: n => n === 1 ? 'That number doesn’t go there. 1 life left.' : `That number doesn’t go there. ${n} lives left.`,
       hintMsg: ({ v, kind }) => kind === 'unlock' ? `Hint: a ${v} goes here. It unlocks several pieces.` : `Hint: this piece can only be a ${v}. Look at its neighbours and its ring.`,
       noHints: 'You’ve used all 3 hints.',
+      inRing: 'That number is already in this ring.',
       lostMsg: 'You’re out of lives. There’s a new puzzle tomorrow.',
       newDay: 'A new day has started: here’s today’s puzzle.',
       newAvail: 'Today’s new puzzle is out. When you finish this one, tap › to play it.',
@@ -303,7 +306,23 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     const left = C - p.giv.length - Object.keys(st.val).length;
     $('progress').textContent = st.solved ? t.completed : st.lost ? t.lostShort : t.left(left);
     renderLives();
+    renderPad();
     const hb = $('hintbtn'); hb.textContent = t.hintBtn(MAX_HINTS - st.hints); hb.disabled = st.hints >= MAX_HINTS;
+  }
+
+  // Numbers already in the selected piece's ring: the visible row of the ring, shown greyed out on the pad
+  // so players don't have to scan the whole circle. Neighbours are not used (that would be a hint).
+  function ringUsed(id) {
+    const used = new Set(), k = Math.floor(id / N);
+    for (let i = 0; i < N; i++) { const d = cid(k, i); const v = value(d); if (v && d !== id) used.add(v); }
+    return used;
+  }
+  function renderPad() {
+    const id = st.sel, empty = id !== null && !st.p.giv.includes(id) && st.val[id] === undefined;
+    const used = empty ? ringUsed(id) : new Set();
+    [...$('pad').querySelectorAll('button')].slice(0, 8).forEach((b, i) => {
+      const u = used.has(i + 1); b.disabled = u; b.classList.toggle('used', u);
+    });
   }
 
   function renderResult() {
@@ -371,6 +390,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (st.p.giv.includes(id) || st.val[id] !== undefined) { say('filled'); return; }
     if (st.wrong && st.wrong.id === id) st.wrong = null;   // any new action on the cell clears the red mistake
     if (n === 0) { delete st.notes[id]; draw(); save(); return; }
+    if (ringUsed(id).has(n)) { say('inRing'); return; }   // keyboard entry of a greyed-out number
     if (st.noteMode) { const s = st.notes[id] || new Set(); s.has(n) ? s.delete(n) : s.add(n); st.notes[id] = s; draw(); save(); return; }
     if (n === st.p.sol[id]) {
       st.sel = null;

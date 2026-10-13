@@ -503,7 +503,15 @@ if (typeof module !== 'undefined') module.exports = AN;
       pick: 'Elige un número para ese trozo.', noteMode: 'Modo notas: toca números para apuntar o quitar posibilidades.',
       selectFirst: 'Primero toca un trozo vacío.', good: 'Bien.',
       wrongNum: n => n === 1 ? 'Ese número no va ahí. Te queda 1 vida.' : `Ese número no va ahí. Te quedan ${n} vidas.`,
-      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Pista: aquí va un ${v}. Con él se desbloquean varios trozos.` : kind === 'ring' ? `Pista: en este anillo, el ${v} solo cabe aquí. Los trozos en amarillo lo impiden en los demás huecos.` : `Pista: aquí solo cabe un ${v}. Los trozos en amarillo descartan todos los demás números.`,
+      // parts: for 'direct', one entry per yellow piece {n, rel, out}; for 'ring', the yellow pieces' numbers.
+      hintMsg: ({ v, kind, parts }) => {
+        const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1] : String(a[0]);
+        const rel = { ring: 'de su anillo', nb: 'vecino', both: 'vecino y de su anillo' };
+        if (kind === 'unlock') return `Pista: aquí va un ${v}. Con él se desbloquean varios trozos.`;
+        if (kind === 'ring') return `Pista: en este anillo, el ${v} solo cabe aquí. En los demás huecos lo impide${parts.length > 1 ? 'n' : ''} ${list(parts.map(n => 'el ' + n))}, que los toca${parts.length > 1 ? 'n' : ''}.`;
+        const ring = parts.filter(x => x.rel === 'ring').map(x => x.n).sort((a, b) => a - b).map(n => 'el ' + n);
+        return `Pista: aquí solo cabe un ${v}. ` + parts.filter(x => x.rel !== 'ring').map(x => `El ${x.n} (${rel[x.rel]}) quita el ${list(x.out)}.`).join(' ') + (ring.length ? ` Su anillo ya tiene ${list(ring)}.` : '');
+      },
       noHints: 'Ya has usado las 3 pistas.',
       inRing: 'Ese número ya está en este aro.',
       lostMsg: 'Te has quedado sin vidas. Mañana hay otro puzzle.',
@@ -535,7 +543,14 @@ if (typeof module !== 'undefined') module.exports = AN;
       pick: 'Pick a number for that piece.', noteMode: 'Notes mode: tap numbers to add or remove candidates.',
       selectFirst: 'Tap an empty piece first.', good: 'Good.',
       wrongNum: n => n === 1 ? 'That number doesn’t go there. 1 life left.' : `That number doesn’t go there. ${n} lives left.`,
-      hintMsg: ({ v, kind }) => kind === 'unlock' ? `Hint: a ${v} goes here. It unlocks several pieces.` : kind === 'ring' ? `Hint: in this ring, the ${v} only fits here. The yellow pieces block it everywhere else.` : `Hint: only a ${v} fits here. The yellow pieces rule out every other number.`,
+      hintMsg: ({ v, kind, parts }) => {
+        const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : String(a[0]);
+        const rel = { ring: 'same ring', nb: 'neighbour', both: 'neighbour, same ring' };
+        if (kind === 'unlock') return `Hint: a ${v} goes here. It unlocks several pieces.`;
+        if (kind === 'ring') return `Hint: in this ring, the ${v} only fits here. In the other gaps it is blocked by ${list(parts.map(n => 'the ' + n))}, which touch${parts.length > 1 ? '' : 'es'} them.`;
+        const ring = parts.filter(x => x.rel === 'ring').map(x => x.n).sort((a, b) => a - b).map(n => 'the ' + n);
+        return `Hint: only a ${v} fits here. ` + parts.filter(x => x.rel !== 'ring').map(x => `The ${x.n} (${rel[x.rel]}) rules out ${list(x.out)}.`).join(' ') + (ring.length ? ` Its ring already has ${list(ring)}.` : '');
+      },
       noHints: 'You’ve used all 3 hints.',
       inRing: 'That number is already in this ring.',
       lostMsg: 'You’re out of lives. There’s a new puzzle tomorrow.',
@@ -686,7 +701,15 @@ if (typeof module !== 'undefined') module.exports = AN;
   function showHint(id) {
     const h = st.hinted[id];
     st.sel = null; st.glow = id; st.why = new Set(h.why || []); draw();
-    say('hintMsg', { v: st.val[id], kind: h.kind }, 'tip');
+    const v = st.val[id], sol = st.p.sol, sameRing = e => Math.floor(e / N) === Math.floor(id / N);
+    const parts = h.kind === 'ring' ? (h.why || []).map(e => sol[e])
+      : (h.why || []).map(e => {
+          const nb = NB[id].includes(e), out = new Set(sameRing(e) ? [sol[e]] : []);
+          if (nb) [sol[e] - 1, sol[e], sol[e] + 1].forEach(w => { if (w >= 1 && w <= N) out.add(w); });
+          out.delete(v);
+          return { n: sol[e], rel: nb && sameRing(e) ? 'both' : nb ? 'nb' : 'ring', out: [...out].sort((a, b) => a - b) };
+        });
+    say('hintMsg', { v, kind: h.kind, parts }, 'tip');
   }
   function clearHint() {
     if (st.glow === null && !st.why.size) return false;

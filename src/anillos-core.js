@@ -296,11 +296,12 @@ const AN = (function () {
     }
     return last;
   }
+  function levelOf(key) { return DAYLEVEL[new Date(parseKey(key)).getUTCDay()]; }
   function daily(key) {
     const t = parseKey(key), level = DAYLEVEL[new Date(t).getUTCDay()];
     const q = generate(Number(key.replace(/-/g, '')), level);
     return { sol: q.sol, giv: q.giv, level, trials: q.h, number: Math.round((t - LAUNCH) / 86400000) + 1, dateKey: key };
   }
-  return { N, K, C, NB, RING, daily, generate, keyOf, parseKey, LAUNCH, count, startState, hint };
+  return { N, K, C, NB, RING, daily, generate, levelOf, keyOf, parseKey, LAUNCH, count, startState, hint };
 })();
 if (typeof module !== 'undefined') module.exports = AN;

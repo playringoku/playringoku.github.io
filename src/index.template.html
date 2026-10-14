@@ -79,6 +79,27 @@ a.btn { display: inline-flex; align-items: center; font-weight: 700; padding: 10
 a.btn:hover { border-color: var(--ink); }
 a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .pc { cursor: pointer; outline: none; }
+.day { grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+.day #today, .day #archbtn { width: auto; height: auto; padding: 8px 12px; font-size: 14px; }
+.day .mid { text-align: left; }
+h1 { white-space: nowrap; }
+.archive { display: grid; gap: 12px; }
+.archhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.archhead h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 24px; }
+.modes { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.modes button { border: 0; border-radius: 0; padding: 10px 8px; background: var(--paper); color: var(--muted); }
+.modes button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.archlist { display: grid; gap: 8px; }
+.archlist button { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px; text-align: left; font-weight: 500; }
+.archlist .n { font-family: var(--display); font-weight: 700; min-width: 3.2em; }
+.archlist .d { color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.archlist .mark { width: 1.6em; text-align: center; }
+.archlist .lv { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--line); }
+.archlist .lv.easy { border-color: var(--good); color: var(--good); }
+.archlist .lv.medium { border-color: var(--accent); color: var(--accent); }
+.archlist .lv.hard { border-color: var(--hint); color: var(--hint); }
+.archlist .lv.expert { border-color: var(--bad); color: var(--bad); }
+.empty { color: var(--muted); }
 </style>
 
 <div class="wrap">
@@ -103,10 +124,22 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     <p data-t="rhelp"></p>
   </details>
 
+  <section class="archive" id="archive" hidden>
+    <div class="archhead"><h2 data-t="archive"></h2><button id="archclose" data-t="backToday"></button></div>
+    <p class="hint" data-t="archIntro"></p>
+    <div class="modes" role="group">
+      <button data-mode="normal" data-t="modeNormal"></button>
+      <button data-mode="classic" data-t="modeClassic"></button>
+    </div>
+    <p class="hint" id="modeNote"></p>
+    <div class="archlist" id="archlist"></div>
+  </section>
+
+  <div id="game" style="display:grid;gap:14px">
   <div class="day">
-    <button id="prev">‹</button>
     <div class="mid"><b id="dtitle"></b><span id="dsub"></span></div>
-    <button id="next">›</button>
+    <button id="archbtn" data-t="archive"></button>
+    <button id="today" data-t="backToday" hidden></button>
   </div>
 
   <div class="bar"><span id="progress"></span><div class="lives" id="lives" role="img"></div><b id="timer">0:00</b></div>
@@ -141,6 +174,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     </div>
     <div class="status" id="status" role="status" aria-live="polite"></div>
   </div>
+  </div>
 </div>
 
 <script>
@@ -168,7 +202,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
       r3: 'Tienes 3 vidas (5 los viernes, sábados y domingos): cada número equivocado resta una y las notas no cuentan. Si las pierdes todas puedes terminarlo igualmente, pero ese día no contará como resuelto.',
-      rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
+      rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo. En Archivo puedes jugar los días anteriores, en modo normal o clásico (sin avisos de error).',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
       easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil',
@@ -207,7 +241,17 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       lateTitle: 'Terminado sin vidas', completedLate: 'Terminado sin vidas',
       shareLate: (n, lvl, m) => `Ringoku nº ${n} · ${lvl}\n❌ Me quedé sin vidas, pero lo terminé con ${m} fallos`,
       newDay: 'Ha empezado un nuevo día: aquí tienes el puzzle de hoy.',
-      newAvail: 'Ya hay puzzle nuevo de hoy. Cuando acabes este, pulsa › para jugarlo.',
+      newAvail: 'Ya hay puzzle nuevo de hoy. Cuando acabes este, pulsa «Ir al de hoy».',
+      archive: 'Archivo', backToday: 'Ir al de hoy', classic: 'Clásico',
+      archIntro: 'Todos los puzzles anteriores. No cuentan para la racha: la racha es solo el puzzle de cada día.',
+      modeNormal: 'Normal', modeClassic: 'Clásico',
+      modeNormalNote: 'Como el de cada día: con vidas, pistas y aviso al fallar.',
+      modeClassicNote: 'Como un sudoku de papel: sin avisos, sin vidas ni pistas. Al rellenarlo todo te dice si está bien.',
+      archEmpty: 'Todavía no hay puzzles anteriores. Vuelve mañana.',
+      classicPick: 'Elige un número. En modo clásico puedes cambiarlo cuando quieras.',
+      classicWrong: n => n === 1 ? 'Está todo relleno, pero hay 1 trozo mal. Sigue buscando.' : `Está todo relleno, pero hay ${n} trozos mal. Sigue buscando.`,
+      classicRight: '¡Correcto!', del2: 'Borrar',
+      shareClassic: (n, lvl, t) => `Ringoku nº ${n} · ${lvl} · modo clásico\n✅ Resuelto en ${t}, sin ayudas`,
       fixed: v => `Número fijo ${v}`, yours: v => `Tu número ${v}`, empty: 'Trozo vacío',
     },
     en: {
@@ -215,7 +259,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
       r3: 'You have 3 lives (5 on Friday, Saturday and Sunday): each wrong number costs one, and notes don’t count. If you lose them all you can still finish the puzzle, but it won’t count as solved that day.',
-      rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday.',
+      rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday. In Archive you can play previous days, in normal or classic mode (no mistake warnings).',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
       easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',
@@ -253,7 +297,17 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       lateTitle: 'Finished without lives', completedLate: 'Finished without lives',
       shareLate: (n, lvl, m) => `Ringoku #${n} · ${lvl}\n❌ Ran out of lives, but finished it with ${m} mistakes`,
       newDay: 'A new day has started: here’s today’s puzzle.',
-      newAvail: 'Today’s new puzzle is out. When you finish this one, tap › to play it.',
+      newAvail: 'Today’s new puzzle is out. When you finish this one, tap “Go to today”.',
+      archive: 'Archive', backToday: 'Go to today', classic: 'Classic',
+      archIntro: 'Every previous puzzle. They don’t count for your streak: the streak is only each day’s puzzle.',
+      modeNormal: 'Normal', modeClassic: 'Classic',
+      modeNormalNote: 'Like the daily puzzle: with lives, hints and a warning when you make a mistake.',
+      modeClassicNote: 'Like a paper sudoku: no warnings, no lives, no hints. When it’s full, it tells you if it’s right.',
+      archEmpty: 'No previous puzzles yet. Come back tomorrow.',
+      classicPick: 'Pick a number. In classic mode you can change it any time.',
+      classicWrong: n => n === 1 ? 'It’s full, but 1 piece is wrong. Keep looking.' : `It’s full, but ${n} pieces are wrong. Keep looking.`,
+      classicRight: 'Correct!', del2: 'Clear',
+      shareClassic: (n, lvl, t) => `Ringoku #${n} · ${lvl} · classic mode\n✅ Solved in ${t}, no help`,
       fixed: v => `Given number ${v}`, yours: v => `Your number ${v}`, empty: 'Empty piece',
     },
   };
@@ -265,7 +319,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   const T = () => I18N[lang];
 
   const st = { key: TODAY, p: null, val: {}, notes: {}, sel: null, noteMode: false,
-    solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, wrong: null, glow: null, why: new Set(), hinted: {}, extra: false, late: false, reveal: false, ms: 0, since: Date.now(), msg: ['start'] };
+    solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, wrong: null, glow: null, why: new Set(), hinted: {}, extra: false, late: false, reveal: false, classic: false, archive: false, ms: 0, since: Date.now(), msg: ['start'] };
 
   const cid = (k, i) => k * N + ((i % N) + N) % N;
   function el(tag, a, parent) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; }
@@ -273,7 +327,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   const fmt = ms => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   // lost = ran out of lives (final for the streak and the shared result); extra = keeps playing anyway;
   // late = finished after losing; reveal = chose to see the solution.
-  const over = () => st.solved || st.late || st.reveal || (st.lost && !st.extra);
+  const over = () => st.classic ? st.solved : st.solved || st.late || st.reveal || (st.lost && !st.extra);
   function say(key, arg, kind) {
     st.msg = [key, arg, kind];
     const v = T()[key];
@@ -285,16 +339,19 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function value(id) { return st.p.giv.includes(id) ? st.p.sol[id] : st.val[id]; }
   function track(path) { try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path, title: path, event: true }); } catch (e) {} }
 
+  // Normal games are stored under the date; classic games (archive only) under "c:" + date.
+  // archive: true marks a past puzzle played from the archive, which never counts for the streak.
   function save() {
     const notes = {}; for (const id in st.notes) notes[id] = [...st.notes[id]];
-    store.set(st.key, { val: st.val, notes, hinted: st.hinted, solved: st.solved, lost: st.lost, extra: st.extra, late: st.late, reveal: st.reveal, mistakes: st.mistakes, hints: st.hints, ms: elapsed() });
+    if (st.classic) { store.set('c:' + st.key, { val: st.val, notes, solved: st.solved, ms: elapsed() }); return; }
+    store.set(st.key, { val: st.val, notes, hinted: st.hinted, solved: st.solved, lost: st.lost, extra: st.extra, late: st.late, reveal: st.reveal, mistakes: st.mistakes, hints: st.hints, archive: st.archive, ms: elapsed() });
   }
   function shiftKey(key, d) { return new Date(AN.parseKey(key) + d * 86400000).toISOString().slice(0, 10); }
   function streak() {
     let n = 0, k = TODAY;
     const t = store.get(TODAY);
     if (!(t && t.solved)) k = shiftKey(TODAY, -1);
-    while (AN.parseKey(k) >= AN.LAUNCH) { const s = store.get(k); if (s && s.solved) { n++; k = shiftKey(k, -1); } else break; }
+    while (AN.parseKey(k) >= AN.LAUNCH) { const s = store.get(k); if (s && s.solved && !s.archive) { n++; k = shiftKey(k, -1); } else break; }
     return n;
   }
   function solvedCount() {
@@ -305,6 +362,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
   function renderLives() {
     const box = $('lives'); box.textContent = '';
+    if (st.classic) { const m = document.createElement('small'); m.textContent = T().modeClassic; box.appendChild(m); return; }
     if (st.lost) { const m = document.createElement('small'); m.textContent = T().mistakesN(st.mistakes); box.appendChild(m); return; }   // no lives left: show the mistake count instead
     const left = LIVES() - st.mistakes;
     for (let i = 0; i < LIVES(); i++) { const s = document.createElement('span'); s.textContent = i < left ? '♥' : '♡'; if (i >= left) s.className = 'lost'; box.appendChild(s); }
@@ -351,7 +409,8 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     $('progress').textContent = st.solved ? t.completed : st.late ? t.completedLate : st.lost && !st.extra ? t.lostShort : t.left(left);
     renderLives();
     renderPad();
-    const hb = $('hintbtn'); hb.textContent = t.hintBtn(MAX_HINTS - st.hints); hb.disabled = st.hints >= MAX_HINTS;
+    const hb = $('hintbtn'); hb.textContent = t.hintBtn(MAX_HINTS - st.hints); hb.disabled = st.hints >= MAX_HINTS; hb.hidden = st.classic;
+    $('del').textContent = st.classic ? t.del2 : t.del;
   }
 
   // Numbers already in the selected piece's ring: the visible row of the ring, shown greyed out on the pad
@@ -362,7 +421,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     return used;
   }
   function renderPad() {
-    const id = st.sel, empty = id !== null && !st.p.giv.includes(id) && st.val[id] === undefined;
+    const id = st.sel, empty = id !== null && !st.p.giv.includes(id) && (st.classic || st.val[id] === undefined);
     const used = empty ? ringUsed(id) : new Set();
     [...$('pad').querySelectorAll('button')].slice(0, 8).forEach((b, i) => {
       const u = used.has(i + 1); b.disabled = u; b.classList.toggle('used', u);
@@ -374,7 +433,10 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     box.classList.toggle('lost', st.lost);
     $('sTime').textContent = fmt(st.ms); $('sStreak').textContent = s; $('sSolved').textContent = solvedCount();
     $('lostActions').hidden = !(st.lost && !st.late && !st.reveal);
-    if (st.late) {
+    if (st.classic) {
+      $('rtitle').textContent = t.classicRight;
+      $('shareText').textContent = t.shareClassic(st.p.number, lvl, fmt(st.ms));
+    } else if (st.late) {
       $('rtitle').textContent = t.lateTitle;
       $('shareText').textContent = t.shareLate(st.p.number, lvl, st.mistakes);
     } else if (st.lost) {
@@ -390,7 +452,8 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function end(kind, firstTime) {
     if (firstTime) {
       st.ms = elapsed();
-      track(`${kind === 'win' ? 'resuelto' : kind === 'late' ? 'terminado-sin-vidas' : 'perdido'}/${st.p.level}`);
+      const ev = `${kind === 'win' ? 'resuelto' : kind === 'late' ? 'terminado-sin-vidas' : 'perdido'}/${st.p.level}`;
+      track(st.classic ? `archivo/clasico/${st.p.level}` : st.archive ? `archivo/${ev}` : ev);
     }
     if (kind === 'win') st.solved = true; else if (kind === 'late') { st.late = true; st.extra = false; } else st.lost = true;
     st.firstEnd = firstTime; st.sel = null; st.wrong = null; st.glow = null; st.why = new Set(); save();
@@ -431,8 +494,8 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (st.hinted[id]) { if (wasShowing) { draw(); say('filled'); } else showHint(id); return; }
     st.sel = st.sel === id ? null : id; draw();
     if (st.sel === null) return;
-    if (st.p.giv.includes(id) || st.val[id] !== undefined) say('filled');
-    else say(st.noteMode ? 'noteMode' : 'pick');
+    if (st.p.giv.includes(id) || (st.val[id] !== undefined && !st.classic)) say('filled');
+    else say(st.noteMode ? 'noteMode' : st.classic ? 'classicPick' : 'pick');
   }
   svg.addEventListener('click', e => { const g = e.target.closest('.pc'); if (g) tap(+g.dataset.id); });
   svg.addEventListener('keydown', e => {
@@ -461,6 +524,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (over()) return;
     if (st.sel === null) { say('selectFirst', null, 'bad'); return; }
     const id = st.sel;
+    if (st.classic) return enterClassic(id, n);
     if (st.p.giv.includes(id) || st.val[id] !== undefined) { say('filled'); return; }
     if (st.wrong && st.wrong.id === id) st.wrong = null;   // any new action on the cell clears the red mistake
     if (n === 0) { delete st.notes[id]; draw(); save(); return; }
@@ -477,6 +541,20 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     if (st.mistakes >= LIVES()) { end('lose', true); say('lostMsg', null, 'bad'); return; }
     draw(); save();
     say('wrongNum', LIVES() - st.mistakes, 'bad');
+  }
+  // Classic mode: any number can go anywhere and be changed; nothing is checked until the board is full.
+  function enterClassic(id, n) {
+    if (st.p.giv.includes(id)) { say('filled'); return; }
+    if (n === 0) { delete st.val[id]; delete st.notes[id]; draw(); save(); return; }
+    if (ringUsed(id).has(n)) { say('inRing'); return; }
+    if (st.noteMode) { if (st.val[id] !== undefined) return; const s = st.notes[id] || new Set(); s.has(n) ? s.delete(n) : s.add(n); st.notes[id] = s; draw(); save(); return; }
+    st.val[id] = n; tidyNotes(id, n); st.sel = null;
+    if (Object.keys(st.val).length === C - st.p.giv.length) {
+      const wrong = Object.keys(st.val).filter(c => st.val[c] !== st.p.sol[c]).length;
+      if (!wrong) { st.sel = null; end('win', true); return; }
+      draw(); save(); say('classicWrong', wrong, 'bad'); return;
+    }
+    draw(); save(); say('classicPick');
   }
   const pad = $('pad');
   [1, 2, 3, 4, 5, 6, 7, 8].forEach(n => { const b = document.createElement('button'); b.textContent = n; b.addEventListener('click', () => enter(n)); pad.appendChild(b); });
@@ -536,8 +614,39 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   });
   $('reveal').addEventListener('click', () => { st.reveal = true; st.extra = false; save(); renderResult(); draw(); say('revealMsg'); });
   $('helpbtn').addEventListener('click', () => { const h = $('help'); h.open = !h.open; if (h.open) h.scrollIntoView({ block: 'nearest' }); });
-  $('prev').addEventListener('click', () => load(shiftKey(st.key, -1)));
-  $('next').addEventListener('click', () => load(shiftKey(st.key, 1)));
+  $('today').addEventListener('click', () => load(TODAY));
+
+  // Archive: every past puzzle, playable in normal or classic mode (never counts for the streak).
+  let archMode = store.get('archmode') === 'classic' ? 'classic' : 'normal';
+  function showArchive(open) {
+    $('archive').hidden = !open; $('game').hidden = open; $('help').hidden = open;
+    if (open) { renderArchive(); window.scrollTo(0, 0); }
+  }
+  function renderArchive() {
+    const t = T(), list = $('archlist'); list.textContent = '';
+    document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === archMode)));
+    $('modeNote').textContent = archMode === 'classic' ? t.modeClassicNote : t.modeNormalNote;
+    let any = false;
+    for (let k = shiftKey(TODAY, -1); AN.parseKey(k) >= AN.LAUNCH; k = shiftKey(k, -1)) {
+      any = true;
+      const level = AN.levelOf(k), number = Math.round((AN.parseKey(k) - AN.LAUNCH) / 86400000) + 1;
+      const s = store.get(archMode === 'classic' ? 'c:' + k : k) || {};
+      const mark = s.solved ? '✅' : s.lost ? '❌' : (s.val && Object.keys(s.val).length) ? '…' : '';
+      const date = new Date(AN.parseKey(k)).toLocaleDateString(t.dateLocale, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+      const b = document.createElement('button');
+      b.innerHTML = `<span class="n"></span><span class="d"></span><span class="lv ${level}"></span><span class="mark"></span>`;
+      b.querySelector('.n').textContent = t.number(number).replace('Ringoku ', '');
+      b.querySelector('.d').textContent = date;
+      b.querySelector('.lv').textContent = t[level];
+      b.querySelector('.mark').textContent = mark;
+      b.addEventListener('click', () => { showArchive(false); load(k, archMode === 'classic'); });
+      list.appendChild(b);
+    }
+    if (!any) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = t.archEmpty; list.appendChild(p); }
+  }
+  $('archbtn').addEventListener('click', () => showArchive($('archive').hidden));
+  $('archclose').addEventListener('click', () => { showArchive(false); if (st.key !== TODAY || st.classic) load(TODAY); });
+  document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => { archMode = b.dataset.mode; store.set('archmode', archMode); renderArchive(); }));
 
   function header() {
     const t = T(), p = st.p, key = st.key;
@@ -545,19 +654,21 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     $('dtitle').textContent = t.number(p.number);
     $('dsub').textContent = key === TODAY ? t.today + label : label.charAt(0).toUpperCase() + label.slice(1);
     const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = t[p.level]; $('dsub').append(badge);
+    if (st.classic) { const b2 = document.createElement('span'); b2.className = 'badge'; b2.textContent = t.classic; $('dsub').append(b2); }
+    $('today').hidden = key === TODAY && !st.classic;
   }
   function applyLang() {
     const t = T();
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-t]').forEach(e => { e.textContent = t[e.dataset.t]; });
     $('del').textContent = t.del;
-    $('prev').setAttribute('aria-label', t.prev); $('next').setAttribute('aria-label', t.next);
     svg.setAttribute('aria-label', t.board);
     document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
     toggleLabels();
     if (st.p) {
       header();
       if (over()) renderResult();
+      if (!$('archive').hidden) renderArchive();
       const [k, a, kind] = st.msg; say(k, a, kind);
       draw();
     }
@@ -566,23 +677,23 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     lang = b.dataset.lang; store.set('lang', lang); applyLang();
   }));
 
-  function load(key) {
+  function load(key, classic = false) {
     if (st.p && !over()) save();
     const p = AN.daily(key);
-    const saved = store.get(key) || {};
+    const saved = store.get(classic ? 'c:' + key : key) || {};
     const val = {};
-    for (const id in (saved.val || {})) if (saved.val[id] === p.sol[id] && !p.giv.includes(+id)) val[id] = saved.val[id];
+    // normal mode keeps only correct numbers; classic mode keeps whatever the player wrote
+    for (const id in (saved.val || {})) if ((classic || saved.val[id] === p.sol[id]) && !p.giv.includes(+id)) val[id] = saved.val[id];
     const notes = {}; for (const id in (saved.notes || {})) notes[id] = new Set(saved.notes[id]);
     const hinted = {}; for (const id in (saved.hinted || {})) if (val[id] !== undefined) hinted[id] = saved.hinted[id];
     Object.assign(st, { key, p, val, notes, hinted, sel: null, focus: null, wrong: null, glow: null, why: new Set(),
+      classic, archive: saved.archive !== undefined ? !!saved.archive : key !== TODAY && !saved.solved && !saved.lost,
       solved: !!saved.solved, lost: !!saved.lost, extra: !!saved.extra, late: !!saved.late, reveal: !!saved.reveal, firstEnd: false, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
       ms: saved.ms || 0, since: Date.now() });
     header();
-    $('prev').disabled = AN.parseKey(key) <= AN.LAUNCH;
-    $('next').disabled = key >= TODAY;
     $('result').hidden = true; $('playarea').hidden = false;
     $('timer').textContent = fmt(st.ms);
-    say(Object.keys(st.val).length ? 'resume' : 'start');
+    say(Object.keys(st.val).length ? 'resume' : classic ? 'classicPick' : 'start');
     if (st.solved) end('win', false);
     else if (st.late) { end('late', false); say('lateMsg'); }
     else if (st.lost && st.extra && !st.reveal) { draw(); say('extraOn', null, 'bad'); }
@@ -606,7 +717,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     retention();
     const untouched = !Object.keys(st.val).length && !Object.keys(st.notes).length && !st.mistakes && !st.hints;
     if (wasToday && (over() || untouched)) { load(TODAY); say('newDay', null, 'tip'); return; }
-    header(); $('next').disabled = st.key >= TODAY;
+    header();
     if (wasToday) say('newAvail', null, 'tip');
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkNewDay(); });

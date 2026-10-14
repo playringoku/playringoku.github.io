@@ -11,6 +11,10 @@ Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino (los anillos es
 
 **Vidas y pistas:** hay 3 vidas de lunes a jueves y 5 de viernes a domingo (difícil y muy difícil). Al quedarse sin vidas se puede seguir jugando hasta terminarlo o ver la solución, pero ese día cuenta como no resuelto; cada número equivocado resta una y a la tercera se pierde el puzzle del día (se muestra la solución y la racha vuelve a cero). Las notas no cuentan. Hay 3 pistas por puzzle: cada una revela el siguiente trozo que se puede deducir con lo que hay en el tablero (`AN.hint` en `src/anillos-core.js`). El resultado para compartir indica vidas y pistas usadas, y un puzzle sin fallos ni pistas cuenta como perfecto.
 
+## Archivo
+
+El botón «Archivo» muestra todos los puzzles anteriores. Se pueden jugar en modo normal (vidas, pistas, aviso de error) o clásico (sin avisos, vidas ni pistas; al rellenarlo todo dice si está bien o cuántos trozos hay mal). Nada del archivo cuenta para la racha (`archive: true` en lo guardado). Las partidas clásicas se guardan en `anillos:v2:c:<fecha>`.
+
 ## Cómo funciona el puzzle diario
 
 - La página genera el puzzle a partir de la fecha. La misma fecha produce siempre el mismo puzzle, así que todo el mundo juega el mismo ese día. No hay servidor.

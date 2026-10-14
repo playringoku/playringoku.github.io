@@ -471,7 +471,9 @@ if (typeof module !== 'undefined') module.exports = AN;
 
 (function () {
   const { N, K, C, NB } = AN;
-  const LIVES = 3, MAX_HINTS = 3;
+  const MAX_HINTS = 3;
+  // 3 lives on easy and medium days, 5 on hard and very hard days (Fri–Sun), where a slip is more likely.
+  const LIVES = () => (st.p && (st.p.level === 'hard' || st.p.level === 'expert')) ? 5 : 3;
   const NS = 'http://www.w3.org/2000/svg', CX = 300, CY = 300, R = 290, WD = 59;
   const $ = id => document.getElementById(id);
   const svg = $('board'), statusEl = $('status');
@@ -488,7 +490,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       howto: 'Cómo se juega', rules: 'Reglas',
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
-      r3: 'Tienes 3 vidas: cada número equivocado resta una. Las notas no cuentan.',
+      r3: 'Tienes 3 vidas (5 los viernes, sábados y domingos): cada número equivocado resta una. Las notas no cuentan.',
       rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
@@ -499,7 +501,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       sTime: 'Tiempo', sStreak: 'Racha de días', sSolved: 'Resueltos',
       shareBtn: 'Compartir', copy: 'Copiar', copied: 'Copiado', copyFail: 'Selecciona el texto y cópialo',
       invite: url => `¿Te atreves? Juega gratis: ${url}`,
-      shareWin: (n, lvl, t, left, h, perfect, s) => `Ringoku nº ${n} · ${lvl}\n✅ Resuelto en ${t} · vidas ${left}/3 · pistas ${h}${perfect ? ' · ¡Perfecto!' : ''}` + (s > 1 ? `\nRacha: ${s} días` : ''),
+      shareWin: (n, lvl, t, left, h, perfect, s, tot) => `Ringoku nº ${n} · ${lvl}\n✅ Resuelto en ${t} · vidas ${left}/${tot} · pistas ${h}${perfect ? ' · ¡Perfecto!' : ''}` + (s > 1 ? `\nRacha: ${s} días` : ''),
       shareLost: (n, lvl) => `Ringoku nº ${n} · ${lvl}\n❌ No lo he conseguido: me quedé sin vidas`,
       notes: 'Notas', on: 'sí', off: 'no', del: 'Borrar notas',
       hintBtn: n => `Pista (${n})`,
@@ -528,7 +530,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       howto: 'How to play', rules: 'Rules',
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
-      r3: 'You have 3 lives: each wrong number costs one. Notes don’t count.',
+      r3: 'You have 3 lives (5 on Friday, Saturday and Sunday): each wrong number costs one. Notes don’t count.',
       rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday.',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
@@ -539,7 +541,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       sTime: 'Time', sStreak: 'Day streak', sSolved: 'Solved',
       shareBtn: 'Share', copy: 'Copy', copied: 'Copied', copyFail: 'Select the text and copy it',
       invite: url => `Can you beat it? Play free: ${url}`,
-      shareWin: (n, lvl, t, left, h, perfect, s) => `Ringoku #${n} · ${lvl}\n✅ Solved in ${t} · lives ${left}/3 · hints ${h}${perfect ? ' · Perfect!' : ''}` + (s > 1 ? `\nStreak: ${s} days` : ''),
+      shareWin: (n, lvl, t, left, h, perfect, s, tot) => `Ringoku #${n} · ${lvl}\n✅ Solved in ${t} · lives ${left}/${tot} · hints ${h}${perfect ? ' · Perfect!' : ''}` + (s > 1 ? `\nStreak: ${s} days` : ''),
       shareLost: (n, lvl) => `Ringoku #${n} · ${lvl}\n❌ I didn’t make it: out of lives`,
       notes: 'Notes', on: 'on', off: 'off', del: 'Clear notes',
       hintBtn: n => `Hint (${n})`,
@@ -610,8 +612,8 @@ if (typeof module !== 'undefined') module.exports = AN;
 
   function renderLives() {
     const box = $('lives'); box.textContent = '';
-    const left = LIVES - st.mistakes;
-    for (let i = 0; i < LIVES; i++) { const s = document.createElement('span'); s.textContent = i < left ? '♥' : '♡'; if (i >= left) s.className = 'lost'; box.appendChild(s); }
+    const left = LIVES() - st.mistakes;
+    for (let i = 0; i < LIVES(); i++) { const s = document.createElement('span'); s.textContent = i < left ? '♥' : '♡'; if (i >= left) s.className = 'lost'; box.appendChild(s); }
     box.setAttribute('aria-label', T().lives(left));
   }
 
@@ -683,7 +685,7 @@ if (typeof module !== 'undefined') module.exports = AN;
     } else {
       const perfect = st.mistakes === 0 && st.hints === 0;
       $('rtitle').textContent = !st.firstEnd ? t.already : perfect ? t.perfect : t.solved;
-      $('shareText').textContent = t.shareWin(st.p.number, lvl, fmt(st.ms), LIVES - st.mistakes, st.hints, perfect, s);
+      $('shareText').textContent = t.shareWin(st.p.number, lvl, fmt(st.ms), LIVES() - st.mistakes, st.hints, perfect, s, LIVES());
     }
     updateShare();
   }
@@ -773,9 +775,9 @@ if (typeof module !== 'undefined') module.exports = AN;
     }
     st.mistakes++;
     st.wrong = { id, n };   // stays in red until the player changes that piece
-    if (st.mistakes >= LIVES) { end('lose', true); say('lostMsg', null, 'bad'); return; }
+    if (st.mistakes >= LIVES()) { end('lose', true); say('lostMsg', null, 'bad'); return; }
     draw(); save();
-    say('wrongNum', LIVES - st.mistakes, 'bad');
+    say('wrongNum', LIVES() - st.mistakes, 'bad');
   }
   const pad = $('pad');
   [1, 2, 3, 4, 5, 6, 7, 8].forEach(n => { const b = document.createElement('button'); b.textContent = n; b.addEventListener('click', () => enter(n)); pad.appendChild(b); });

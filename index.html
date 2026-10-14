@@ -153,13 +153,13 @@ h1 { white-space: nowrap; }
 
   <details id="help">
     <summary data-t="rules"></summary>
+    <p><button id="tutOpen" class="primary" data-t="tutOpen"></button></p>
     <ol>
       <li data-t="r1"></li>
       <li data-t="r2"></li>
       <li data-t="r3"></li>
     </ol>
     <p data-t="rhelp"></p>
-    <p><button id="tutOpen" data-t="tutOpen"></button></p>
   </details>
 
   <section class="archive" id="archive" hidden>
@@ -1018,7 +1018,8 @@ if (typeof module !== 'undefined') module.exports = AN;
     draw(); say('extraOn', null, 'bad');
   });
   $('reveal').addEventListener('click', () => { st.reveal = true; st.extra = false; save(); renderResult(); draw(); say('revealMsg'); });
-  $('helpbtn').addEventListener('click', () => { const h = $('help'); h.open = !h.open; if (h.open) h.scrollIntoView({ block: 'nearest' }); });
+  // "How to play" opens the interactive tutorial; the written rules stay in the "Rules" panel.
+  $('helpbtn').addEventListener('click', () => openTut());
   $('today').addEventListener('click', () => load(TODAY));
 
   // Archive: every past puzzle, playable in normal or classic mode (never counts for the streak).

@@ -116,7 +116,6 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     <h2 id="rtitle"></h2>
     <div class="row" id="lostActions" hidden>
       <button class="primary" id="keepgoing" data-t="keepGoing"></button>
-      <button id="restart" data-t="restart"></button>
       <button id="reveal" data-t="reveal"></button>
     </div>
     <div class="stats">
@@ -200,14 +199,13 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       noHints: 'Ya has usado las 3 pistas.',
       inRing: 'Ese número ya está en este aro.',
       lostMsg: 'Te has quedado sin vidas. Puedes seguir jugando para terminarlo, aunque hoy no contará como resuelto.',
-      keepGoing: 'Seguir jugando sin vidas', reveal: 'Ver la solución', restart: 'Empezar de nuevo',
-      restartOn: 'Tablero limpio. Este intento ya no cuenta para la racha, pero puedes resolverlo.',
+      keepGoing: 'Seguir jugando sin vidas', reveal: 'Ver la solución',
       mistakesN: n => n === 1 ? '1 fallo' : `${n} fallos`,
       revealMsg: 'Esta es la solución. Mañana hay otro puzzle.', lateMsg: '¡Terminado! Hoy no cuenta como resuelto, pero mañana hay otro.',
       extraOn: 'Sigues sin vidas: termínalo por gusto. Hoy no cuenta para la racha.',
       wrongExtra: n => `Ese número no va ahí. Llevas ${n} fallos.`,
       lateTitle: 'Terminado sin vidas', completedLate: 'Terminado sin vidas',
-      shareLate: (n, lvl, m, retry) => `Ringoku nº ${n} · ${lvl}\n❌ Me quedé sin vidas, pero lo terminé ${retry ? 'en otro intento ' : ''}con ${m} fallos`,
+      shareLate: (n, lvl, m) => `Ringoku nº ${n} · ${lvl}\n❌ Me quedé sin vidas, pero lo terminé con ${m} fallos`,
       newDay: 'Ha empezado un nuevo día: aquí tienes el puzzle de hoy.',
       newAvail: 'Ya hay puzzle nuevo de hoy. Cuando acabes este, pulsa › para jugarlo.',
       fixed: v => `Número fijo ${v}`, yours: v => `Tu número ${v}`, empty: 'Trozo vacío',
@@ -247,14 +245,13 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       noHints: 'You’ve used all 3 hints.',
       inRing: 'That number is already in this ring.',
       lostMsg: 'You’re out of lives. You can keep playing to finish it, but today won’t count as solved.',
-      keepGoing: 'Keep playing without lives', reveal: 'Show the solution', restart: 'Start over',
-      restartOn: 'Fresh board. This attempt won’t count for your streak, but you can still solve it.',
+      keepGoing: 'Keep playing without lives', reveal: 'Show the solution',
       mistakesN: n => n === 1 ? '1 mistake' : `${n} mistakes`,
       revealMsg: 'Here’s the solution. There’s a new puzzle tomorrow.', lateMsg: 'Finished! It doesn’t count as solved today, but there’s a new one tomorrow.',
       extraOn: 'No lives left: finish it for fun. Today won’t count for your streak.',
       wrongExtra: n => `That number doesn’t go there. ${n} mistakes so far.`,
       lateTitle: 'Finished without lives', completedLate: 'Finished without lives',
-      shareLate: (n, lvl, m, retry) => `Ringoku #${n} · ${lvl}\n❌ Ran out of lives, but finished it ${retry ? 'on a second try ' : ''}with ${m} mistakes`,
+      shareLate: (n, lvl, m) => `Ringoku #${n} · ${lvl}\n❌ Ran out of lives, but finished it with ${m} mistakes`,
       newDay: 'A new day has started: here’s today’s puzzle.',
       newAvail: 'Today’s new puzzle is out. When you finish this one, tap › to play it.',
       fixed: v => `Given number ${v}`, yours: v => `Your number ${v}`, empty: 'Empty piece',
@@ -268,7 +265,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   const T = () => I18N[lang];
 
   const st = { key: TODAY, p: null, val: {}, notes: {}, sel: null, noteMode: false,
-    solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, wrong: null, glow: null, why: new Set(), hinted: {}, extra: false, late: false, reveal: false, retry: false, ms: 0, since: Date.now(), msg: ['start'] };
+    solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, wrong: null, glow: null, why: new Set(), hinted: {}, extra: false, late: false, reveal: false, ms: 0, since: Date.now(), msg: ['start'] };
 
   const cid = (k, i) => k * N + ((i % N) + N) % N;
   function el(tag, a, parent) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; }
@@ -290,7 +287,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
   function save() {
     const notes = {}; for (const id in st.notes) notes[id] = [...st.notes[id]];
-    store.set(st.key, { val: st.val, notes, hinted: st.hinted, solved: st.solved, lost: st.lost, extra: st.extra, late: st.late, reveal: st.reveal, retry: st.retry, mistakes: st.mistakes, hints: st.hints, ms: elapsed() });
+    store.set(st.key, { val: st.val, notes, hinted: st.hinted, solved: st.solved, lost: st.lost, extra: st.extra, late: st.late, reveal: st.reveal, mistakes: st.mistakes, hints: st.hints, ms: elapsed() });
   }
   function shiftKey(key, d) { return new Date(AN.parseKey(key) + d * 86400000).toISOString().slice(0, 10); }
   function streak() {
@@ -379,7 +376,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     $('lostActions').hidden = !(st.lost && !st.late && !st.reveal);
     if (st.late) {
       $('rtitle').textContent = t.lateTitle;
-      $('shareText').textContent = t.shareLate(st.p.number, lvl, st.mistakes, st.retry);
+      $('shareText').textContent = t.shareLate(st.p.number, lvl, st.mistakes);
     } else if (st.lost) {
       $('rtitle').textContent = t.lostTitle;
       $('shareText').textContent = t.shareLost(st.p.number, lvl);
@@ -537,12 +534,6 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     $('result').hidden = true; $('playarea').hidden = false;
     draw(); say('extraOn', null, 'bad');
   });
-  // Start over from the printed numbers; still counts as not solved today.
-  $('restart').addEventListener('click', () => {
-    Object.assign(st, { val: {}, notes: {}, hinted: {}, mistakes: 0, hints: 0, wrong: null, glow: null, why: new Set(), sel: null, extra: true, retry: true, since: Date.now() });
-    save(); $('result').hidden = true; $('playarea').hidden = false;
-    draw(); say('restartOn', null, 'bad'); track(`reintento/${st.p.level}`);
-  });
   $('reveal').addEventListener('click', () => { st.reveal = true; st.extra = false; save(); renderResult(); draw(); say('revealMsg'); });
   $('helpbtn').addEventListener('click', () => { const h = $('help'); h.open = !h.open; if (h.open) h.scrollIntoView({ block: 'nearest' }); });
   $('prev').addEventListener('click', () => load(shiftKey(st.key, -1)));
@@ -584,7 +575,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     const notes = {}; for (const id in (saved.notes || {})) notes[id] = new Set(saved.notes[id]);
     const hinted = {}; for (const id in (saved.hinted || {})) if (val[id] !== undefined) hinted[id] = saved.hinted[id];
     Object.assign(st, { key, p, val, notes, hinted, sel: null, focus: null, wrong: null, glow: null, why: new Set(),
-      solved: !!saved.solved, lost: !!saved.lost, extra: !!saved.extra, late: !!saved.late, reveal: !!saved.reveal, retry: !!saved.retry, firstEnd: false, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
+      solved: !!saved.solved, lost: !!saved.lost, extra: !!saved.extra, late: !!saved.late, reveal: !!saved.reveal, firstEnd: false, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
       ms: saved.ms || 0, since: Date.now() });
     header();
     $('prev').disabled = AN.parseKey(key) <= AN.LAUNCH;

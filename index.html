@@ -90,6 +90,9 @@ button.primary { background: var(--ink); color: var(--bg); border-color: var(--i
 .result h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--good); }
 .result.lost { background: var(--badbg); border-color: var(--bad); }
 .result.lost h2 { color: var(--bad); }
+.result.late { background: var(--whybg); border-color: var(--whyline); }
+.result.late h2 { color: var(--hint); }
+.rnote { margin: 0; font-size: 15px; }
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center; }
 .stats div { background: var(--paper); border-radius: 8px; padding: 8px 4px; }
 .stats b { display: block; font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; }
@@ -169,6 +172,7 @@ h1 { white-space: nowrap; }
 
   <section class="result" id="result" hidden aria-live="polite">
     <h2 id="rtitle"></h2>
+    <p class="rnote" id="rnote" hidden></p>
     <div class="row" id="lostActions" hidden>
       <button class="primary" id="keepgoing" data-t="keepGoing"></button>
       <button id="reveal" data-t="reveal"></button>
@@ -567,8 +571,9 @@ if (typeof module !== 'undefined') module.exports = AN;
       revealMsg: 'Esta es la solución. Mañana hay otro puzzle.', lateMsg: '¡Terminado! Hoy no cuenta como resuelto, pero mañana hay otro.',
       extraOn: 'Sigues sin vidas: termínalo por gusto. Hoy no cuenta para la racha.',
       wrongExtra: n => `Ese número no va ahí. Llevas ${n} fallos.`,
-      lateTitle: 'Terminado sin vidas', completedLate: 'Terminado sin vidas',
-      shareLate: (n, lvl, m) => `Ringoku nº ${n} · ${lvl}\n❌ Me quedé sin vidas, pero lo terminé con ${m} fallos`,
+      lateTitle: '¡Terminado!', completedLate: 'Terminado con fallos',
+      lateNote: m => `Lo has completado con ${m} fallos. Como te quedaste sin vidas por el camino, hoy no cuenta para la racha.`,
+      shareLate: (n, lvl, m) => `Ringoku nº ${n} · ${lvl}\n🟨 Terminado con ${m} fallos (me quedé sin vidas por el camino)`,
       newDay: 'Ha empezado un nuevo día: aquí tienes el puzzle de hoy.',
       newAvail: 'Ya hay puzzle nuevo de hoy. Cuando acabes este, pulsa «Ir al de hoy».',
       archive: 'Archivo', backToday: 'Ir al de hoy', classic: 'Clásico',
@@ -623,8 +628,9 @@ if (typeof module !== 'undefined') module.exports = AN;
       revealMsg: 'Here’s the solution. There’s a new puzzle tomorrow.', lateMsg: 'Finished! It doesn’t count as solved today, but there’s a new one tomorrow.',
       extraOn: 'No lives left: finish it for fun. Today won’t count for your streak.',
       wrongExtra: n => `That number doesn’t go there. ${n} mistakes so far.`,
-      lateTitle: 'Finished without lives', completedLate: 'Finished without lives',
-      shareLate: (n, lvl, m) => `Ringoku #${n} · ${lvl}\n❌ Ran out of lives, but finished it with ${m} mistakes`,
+      lateTitle: 'Finished!', completedLate: 'Finished with mistakes',
+      lateNote: m => `You completed it with ${m} mistakes. Since you ran out of lives along the way, it doesn’t count for your streak today.`,
+      shareLate: (n, lvl, m) => `Ringoku #${n} · ${lvl}\n🟨 Finished with ${m} mistakes (ran out of lives along the way)`,
       newDay: 'A new day has started: here’s today’s puzzle.',
       newAvail: 'Today’s new puzzle is out. When you finish this one, tap “Go to today”.',
       archive: 'Archive', backToday: 'Go to today', classic: 'Classic',
@@ -759,7 +765,8 @@ if (typeof module !== 'undefined') module.exports = AN;
 
   function renderResult() {
     const t = T(), s = streak(), lvl = t[st.p.level], box = $('result');
-    box.classList.toggle('lost', st.lost);
+    box.classList.toggle('lost', st.lost && !st.late); box.classList.toggle('late', st.late);
+    $('rnote').hidden = !st.late; if (st.late) $('rnote').textContent = t.lateNote(st.mistakes);
     $('sTime').textContent = fmt(st.ms); $('sStreak').textContent = s; $('sSolved').textContent = solvedCount();
     $('lostActions').hidden = !(st.lost && !st.late && !st.reveal);
     if (st.classic) {
@@ -960,7 +967,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       any = true;
       const level = AN.levelOf(k), number = Math.round((AN.parseKey(k) - AN.LAUNCH) / 86400000) + 1;
       const s = store.get(archMode === 'classic' ? 'c:' + k : k) || {};
-      const mark = s.solved ? '✅' : s.lost ? '❌' : (s.val && Object.keys(s.val).length) ? '…' : '';
+      const mark = s.solved ? '✅' : s.late ? '🟨' : s.lost ? '❌' : (s.val && Object.keys(s.val).length) ? '…' : '';
       const date = new Date(AN.parseKey(k)).toLocaleDateString(t.dateLocale, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
       const b = document.createElement('button');
       b.innerHTML = `<span class="n"></span><span class="d"></span><span class="lv ${level}"></span><span class="mark"></span>`;

@@ -130,6 +130,8 @@ h1 { white-space: nowrap; }
 .tuthead button { padding: 6px 12px; font-size: 14px; }
 .tutbox h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 20px; line-height: 1.25; }
 .tutbox p { margin: 0; }
+#tutBoard.big { max-width: 340px; }
+#tutBoard .tp { cursor: pointer; }
 #tutBoard { width: 100%; max-width: 260px; height: auto; display: block; margin: 0 auto; }
 #tutPad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .status.good { border-color: var(--good); color: var(--good); }
@@ -628,11 +630,14 @@ if (typeof module !== 'undefined') module.exports = AN;
       tut2Ring: n => `El ${n} ya está en este anillo.`,
       tut2Nb: a => `Este trozo toca un ${a}, así que no puede llevar ${a - 1}, ${a} ni ${a + 1}.`,
       tut2Right: '¡Eso es! El 7 y el 8 ya están en el anillo, el 3 quita el 2, el 3 y el 4, y el 6 quita el 5, el 6 y el 7. Solo queda el 1.',
-      tut3Title: '¡Ya sabes jugar!',
-      tut3Text: 'Cada día hay un puzzle nuevo: fácil de lunes a jueves y algo más difícil de viernes a domingo. Al tocar un trozo, el teclado tacha los números que ya están en su anillo. Si te atascas, pulsa Pista.',
-      tut3Medium: 'El de hoy es algo más difícil. Si es tu primera vez, mejor empieza con uno fácil.',
-      tutNext: 'Siguiente', playToday: 'Jugar el de hoy', playEasy: 'Empezar con uno fácil',
-      practiceMsg: 'Puzzle fácil de práctica: no cuenta para la racha. Cuando quieras, pulsa «Ir al de hoy».',
+      tut3Title: 'Ahora tú: un mini Ringoku',
+      tut3Text: 'Solo faltan 3 trozos. Toca un hueco y elige su número. Dos de ellos están en el mismo anillo: fíjate en sus vecinos para saber cuál va en cada uno.',
+      tut3Select: 'Primero toca un hueco (los trozos vacíos).',
+      tut3Good: 'Bien. Sigue con otro hueco.',
+      tut3Right: '¡Resuelto! Así es un Ringoku, solo que con más huecos.',
+      tut4Title: '¡Ya sabes jugar!',
+      tut4Text: 'Cada día hay un puzzle nuevo: fácil de lunes a jueves y algo más difícil de viernes a domingo. Al tocar un trozo, el teclado tacha los números que ya están en su anillo. Si te atascas, pulsa Pista.',
+      tutNext: 'Siguiente', playToday: 'Jugar el de hoy',
     },
     en: {
       howto: 'How to play', rules: 'Rules',
@@ -700,11 +705,14 @@ if (typeof module !== 'undefined') module.exports = AN;
       tut2Ring: n => `The ${n} is already in this ring.`,
       tut2Nb: a => `This piece touches a ${a}, so it can’t hold ${a - 1}, ${a} or ${a + 1}.`,
       tut2Right: 'That’s it! The 7 and 8 are already in the ring, the 3 rules out 2, 3 and 4, and the 6 rules out 5, 6 and 7. Only the 1 is left.',
-      tut3Title: 'You’re ready to play!',
-      tut3Text: 'There’s a new puzzle every day: easy Monday to Thursday, a little harder Friday to Sunday. When you tap a piece, the keypad crosses out the numbers already in its ring. If you get stuck, tap Hint.',
-      tut3Medium: 'Today’s is a little harder. If it’s your first time, start with an easy one.',
-      tutNext: 'Next', playToday: 'Play today’s puzzle', playEasy: 'Start with an easy one',
-      practiceMsg: 'Easy practice puzzle: it doesn’t count for your streak. Tap “Go to today” whenever you like.',
+      tut3Title: 'Your turn: a mini Ringoku',
+      tut3Text: 'Only 3 pieces are missing. Tap a gap and pick its number. Two of them are in the same ring: look at their neighbours to tell which goes where.',
+      tut3Select: 'Tap a gap (an empty piece) first.',
+      tut3Good: 'Good. Now another gap.',
+      tut3Right: 'Solved! That’s a Ringoku, just with more gaps.',
+      tut4Title: 'You’re ready to play!',
+      tut4Text: 'There’s a new puzzle every day: easy Monday to Thursday, a little harder Friday to Sunday. When you tap a piece, the keypad crosses out the numbers already in its ring. If you get stuck, tap Hint.',
+      tutNext: 'Next', playToday: 'Play today’s puzzle',
     },
   };
   let lang = store.get('lang');
@@ -1147,14 +1155,17 @@ if (typeof module !== 'undefined') module.exports = AN;
     if ([2, 3, 7, 14, 30].includes(n)) sendEvent(`retencion/dias-${n}`);
   }
 
-  // Tutorial: two tiny boards that teach the two rules by doing, then an easy practice puzzle on harder days.
+  // Tutorial: two tiny boards that teach the two rules by doing, then a nearly solved real board to finish.
   // Shown once to players who have never solved a puzzle; it can be reopened from "How to play".
   const TUT = [
     { ring: [1, 3, 5, 7, 2, 4, 6, 8], target: 5, answer: 4 },
     // outer ring 0–7, inner ring 8–15 (offset half a piece); target outer 0 touches outer 7 and 1, inner 15 and 8
     { cells: { 7: 3, 3: 8, 5: 7, 8: 6 }, target: 0, answer: 1, nb: [7, 1, 15, 8] },
+    // a real board (puzzle nº 1) with 3 gaps: pieces 1 and 5 share the outer ring (1 and 6 missing), so the
+    // neighbours decide which goes where; piece 19 is alone in its ring.
+    { board: [7,1,5,8,3,6,2,4,4,7,3,5,1,8,6,2,2,5,7,3,6,1,4,8,7,3,5,1,8,6,2,4], gaps: [1, 5, 19] },
   ];
-  const tut = { step: 0, done: false, flash: null };
+  const tut = { step: 0, done: false, flash: null, sel: null, placed: {} };
   function sector(parent, r1, r0, th, attrs) {
     const P = (r, deg) => { const a = deg * Math.PI / 180; return [150 + r * Math.sin(a), 150 - r * Math.cos(a)]; };
     const a = P(r1, th - 22.5), b = P(r1, th + 22.5), c = P(r0, th + 22.5), d = P(r0, th - 22.5);
@@ -1174,6 +1185,26 @@ if (typeof module !== 'undefined') module.exports = AN;
       const shown = isT && tut.done ? S.answer : v;
       if (shown) tutText(b, m, shown, isT ? 'var(--good)' : 'var(--ink)');
     };
+    b.classList.toggle('big', !!S.board);
+    if (S.board) {
+      const W = 34, nb = new Set(tut.sel !== null && !tut.done ? NB[tut.sel] : []);
+      for (let id = 0; id < C; id++) {
+        const k = Math.floor(id / N), i = id % N, gap = S.gaps.includes(id), mine = tut.placed[id];
+        const isSel = id === tut.sel && !tut.done;
+        const fill = tut.flash === id ? 'var(--badbg)' : nb.has(id) ? 'var(--nb)' : gap && !mine ? 'var(--paper)' : k % 2 ? 'var(--tint)' : 'var(--paper)';
+        const m = sector(b, 145 - k * W, 145 - (k + 1) * W, 45 * i + 22.5 * k, { fill,
+          stroke: isSel ? 'var(--accent)' : tut.flash === id ? 'var(--bad)' : 'var(--ink)', 'stroke-width': isSel || tut.flash === id ? 3.5 : 1 });
+        const v = gap ? mine || (tut.done ? 0 : '?') : S.board[id];
+        if (v) el('text', { x: m[0], y: m[1] + 7, 'text-anchor': 'middle', 'font-family': 'var(--display)', 'font-weight': gap ? 700 : 500, 'font-size': k === 3 ? 15 : 19,
+          fill: v === '?' ? 'var(--accent)' : gap ? 'var(--good)' : 'var(--ink)', 'pointer-events': 'none' }, b).textContent = v;
+        if (gap && !mine && !tut.done) {
+          const hit = b.querySelectorAll('path')[id];
+          hit.setAttribute('class', 'tp');
+          hit.addEventListener('click', () => { tut.sel = id; tut.flash = null; tut.msg = null; renderTut(); });
+        }
+      }
+      return;
+    }
     if (S.ring) S.ring.forEach((v, i) => piece(i, 145, 80, 45 * i, i === S.target ? 0 : v));
     else {
       for (let i = 0; i < 8; i++) piece(i, 145, 95, 45 * i, S.cells[i]);
@@ -1183,23 +1214,36 @@ if (typeof module !== 'undefined') module.exports = AN;
   function renderTut() {
     const t = T(), S = TUT[tut.step], last = tut.step === TUT.length;
     $('tutStep').textContent = t.tutStepN(tut.step + 1, TUT.length + 1);
-    $('tutTitle').textContent = t[last ? 'tut3Title' : `tut${tut.step + 1}Title`];
-    $('tutText').textContent = last ? t.tut3Text + (AN.levelOf(TODAY) !== 'easy' ? ' ' + t.tut3Medium : '') : t[`tut${tut.step + 1}Text`];
+    $('tutTitle').textContent = t[`tut${tut.step + 1}Title`];
+    $('tutText').textContent = t[`tut${tut.step + 1}Text`];
     $('tutPad').hidden = last; $('tutMsg').hidden = last;
     if (!tut.msg) { $('tutMsg').textContent = ''; $('tutMsg').className = 'status'; }
     else { const [k, a, kind] = tut.msg; $('tutMsg').textContent = typeof t[k] === 'function' ? t[k](a) : t[k]; $('tutMsg').className = 'status ' + kind; }
     const acts = $('tutActions'); acts.textContent = '';
     const btn = (label, primary, fn) => { const x = document.createElement('button'); x.textContent = label; if (primary) x.className = 'primary'; x.addEventListener('click', fn); acts.appendChild(x); return x; };
-    if (!last && tut.done) btn(t.tutNext, true, () => { tut.step++; tut.done = false; tut.msg = null; tut.flash = null; renderTut(); }).focus();
-    if (last) {
-      if (AN.levelOf(TODAY) !== 'easy') { btn(t.playEasy, true, () => closeTut('practica', true)).focus(); btn(t.playToday, false, () => closeTut('fin')); }
-      else btn(t.playToday, true, () => closeTut('fin')).focus();
-    }
+    if (!last && tut.done) btn(t.tutNext, true, () => { tut.step++; Object.assign(tut, { done: false, msg: null, flash: null, sel: null, placed: {} }); renderTut(); }).focus();
+    if (last) btn(t.playToday, true, () => closeTut('fin')).focus();
     drawTut();
   }
   function tutPick(v) {
     const S = TUT[tut.step]; if (!S || tut.done) return;
     tut.flash = null;
+    if (S.board) {
+      if (tut.sel === null) { tut.msg = ['tut3Select', null, 'tip']; renderTut(); return; }
+      const id = tut.sel, cur = c => S.gaps.includes(c) ? tut.placed[c] : S.board[c];
+      if (v === S.board[id]) {
+        tut.placed[id] = v; tut.sel = null;
+        tut.done = S.gaps.every(c => tut.placed[c]);
+        tut.msg = tut.done ? ['tut3Right', null, 'good'] : ['tut3Good', null, 'good'];
+      } else {
+        const k = Math.floor(id / N);
+        const holder = [...Array(N).keys()].map(i => k * N + i).find(c => c !== id && cur(c) === v);
+        const nb = NB[id].find(c => cur(c) && Math.abs(cur(c) - v) <= 1);
+        if (holder !== undefined) { tut.flash = holder; tut.msg = ['tut2Ring', v, 'bad']; }
+        else { tut.flash = nb; tut.msg = ['tut2Nb', cur(nb), 'bad']; }
+      }
+      renderTut(); return;
+    }
     if (v === S.answer) { tut.done = true; tut.msg = [tut.step ? 'tut2Right' : 'tut1Right', null, 'good']; }
     else if (S.ring) { tut.flash = S.ring.indexOf(v); tut.msg = ['tut1Wrong', v, 'bad']; }
     else {
@@ -1212,25 +1256,12 @@ if (typeof module !== 'undefined') module.exports = AN;
   }
   for (let v = 1; v <= 8; v++) { const x = document.createElement('button'); x.textContent = v; x.addEventListener('click', () => tutPick(v)); $('tutPad').appendChild(x); }
   function openTut() {
-    Object.assign(tut, { step: 0, done: false, msg: null, flash: null });
+    Object.assign(tut, { step: 0, done: false, msg: null, flash: null, sel: null, placed: {} });
     $('tut').hidden = false; renderTut(); track('tutorial/inicio');
     document.querySelector('.tutbox').focus();
   }
-  function closeTut(how, practice = false) {
+  function closeTut(how) {
     $('tut').hidden = true; store.set('tut', 1); track('tutorial/' + how);
-    if (practice) startPractice();
-  }
-  // The most recent easy past puzzle the player hasn't solved yet (archive puzzles never count for the streak).
-  function startPractice() {
-    let pick = null;
-    for (let k = shiftKey(TODAY, -1); AN.parseKey(k) >= AN.LAUNCH; k = shiftKey(k, -1)) {
-      if (AN.levelOf(k) !== 'easy') continue;
-      const s = store.get(k);
-      if (!(s && (s.solved || s.lost))) { pick = k; break; }
-      if (!pick) pick = k;
-    }
-    if (!pick) return;
-    load(pick); say('practiceMsg', null, 'tip');
   }
   $('tutSkip').addEventListener('click', () => closeTut('saltado'));
   $('tutOpen').addEventListener('click', openTut);

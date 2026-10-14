@@ -13,7 +13,7 @@ Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino (los anillos es
 
 ## Tutorial
 
-La primera vez que entra alguien que aún no ha resuelto ningún puzzle se abre un tutorial de 3 pasos: un anillo donde falta un número (regla 1) y un minitablero de dos anillos donde solo cabe el 1 (regla 2), con explicación de cada fallo. Si el puzzle de hoy no es fácil, al final propone empezar con un puzzle fácil anterior de práctica (del archivo, no cuenta para la racha). Se puede volver a abrir desde «Cómo se juega». Eventos de GoatCounter: `tutorial/inicio`, `tutorial/fin`, `tutorial/practica`, `tutorial/saltado`.
+La primera vez que entra alguien que aún no ha resuelto ningún puzzle se abre un tutorial de 4 pasos: un anillo donde falta un número (regla 1), un minitablero de dos anillos donde solo cabe el 1 (regla 2), un tablero completo casi resuelto con 3 huecos (dos en el mismo anillo, que se distinguen por sus vecinos) y un resumen con el botón «Jugar el de hoy». Cada fallo se explica y se marca en rojo el trozo que lo impide. Se puede volver a abrir desde «Cómo se juega». Eventos de GoatCounter: `tutorial/inicio`, `tutorial/fin`, `tutorial/saltado`.
 
 ## Archivo
 

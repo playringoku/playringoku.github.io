@@ -113,6 +113,10 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
   <section class="result" id="result" hidden aria-live="polite">
     <h2 id="rtitle"></h2>
+    <div class="row" id="lostActions" hidden>
+      <button class="primary" id="keepgoing" data-t="keepGoing"></button>
+      <button id="reveal" data-t="reveal"></button>
+    </div>
     <div class="stats">
       <div><b id="sTime">0:00</b><span data-t="sTime"></span></div>
       <div><b id="sStreak">0</b><span data-t="sStreak"></span></div>
@@ -162,7 +166,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       howto: 'Cómo se juega', rules: 'Reglas',
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
-      r3: 'Tienes 3 vidas (5 los viernes, sábados y domingos): cada número equivocado resta una. Las notas no cuentan.',
+      r3: 'Tienes 3 vidas (5 los viernes, sábados y domingos): cada número equivocado resta una y las notas no cuentan. Si las pierdes todas puedes terminarlo igualmente, pero ese día no contará como resuelto.',
       rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo.',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
@@ -193,7 +197,13 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       },
       noHints: 'Ya has usado las 3 pistas.',
       inRing: 'Ese número ya está en este aro.',
-      lostMsg: 'Te has quedado sin vidas. Mañana hay otro puzzle.',
+      lostMsg: 'Te has quedado sin vidas. Puedes seguir jugando para terminarlo, aunque hoy no contará como resuelto.',
+      keepGoing: 'Seguir jugando sin vidas', reveal: 'Ver la solución',
+      revealMsg: 'Esta es la solución. Mañana hay otro puzzle.', lateMsg: '¡Terminado! Hoy no cuenta como resuelto, pero mañana hay otro.',
+      extraOn: 'Sigues sin vidas: termínalo por gusto. Hoy no cuenta para la racha.',
+      wrongExtra: n => `Ese número no va ahí. Llevas ${n} fallos.`,
+      lateTitle: 'Terminado sin vidas', completedLate: 'Terminado sin vidas',
+      shareLate: (n, lvl, m) => `Ringoku nº ${n} · ${lvl}\n❌ Me quedé sin vidas, pero lo terminé con ${m} fallos`,
       newDay: 'Ha empezado un nuevo día: aquí tienes el puzzle de hoy.',
       newAvail: 'Ya hay puzzle nuevo de hoy. Cuando acabes este, pulsa › para jugarlo.',
       fixed: v => `Número fijo ${v}`, yours: v => `Tu número ${v}`, empty: 'Trozo vacío',
@@ -202,7 +212,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       howto: 'How to play', rules: 'Rules',
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
-      r3: 'You have 3 lives (5 on Friday, Saturday and Sunday): each wrong number costs one. Notes don’t count.',
+      r3: 'You have 3 lives (5 on Friday, Saturday and Sunday): each wrong number costs one, and notes don’t count. If you lose them all you can still finish the puzzle, but it won’t count as solved that day.',
       rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday.',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
@@ -232,7 +242,13 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       },
       noHints: 'You’ve used all 3 hints.',
       inRing: 'That number is already in this ring.',
-      lostMsg: 'You’re out of lives. There’s a new puzzle tomorrow.',
+      lostMsg: 'You’re out of lives. You can keep playing to finish it, but today won’t count as solved.',
+      keepGoing: 'Keep playing without lives', reveal: 'Show the solution',
+      revealMsg: 'Here’s the solution. There’s a new puzzle tomorrow.', lateMsg: 'Finished! It doesn’t count as solved today, but there’s a new one tomorrow.',
+      extraOn: 'No lives left: finish it for fun. Today won’t count for your streak.',
+      wrongExtra: n => `That number doesn’t go there. ${n} mistakes so far.`,
+      lateTitle: 'Finished without lives', completedLate: 'Finished without lives',
+      shareLate: (n, lvl, m) => `Ringoku #${n} · ${lvl}\n❌ Ran out of lives, but finished it with ${m} mistakes`,
       newDay: 'A new day has started: here’s today’s puzzle.',
       newAvail: 'Today’s new puzzle is out. When you finish this one, tap › to play it.',
       fixed: v => `Given number ${v}`, yours: v => `Your number ${v}`, empty: 'Empty piece',
@@ -246,13 +262,15 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   const T = () => I18N[lang];
 
   const st = { key: TODAY, p: null, val: {}, notes: {}, sel: null, noteMode: false,
-    solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, wrong: null, glow: null, why: new Set(), hinted: {}, ms: 0, since: Date.now(), msg: ['start'] };
+    solved: false, lost: false, firstEnd: false, mistakes: 0, hints: 0, wrong: null, glow: null, why: new Set(), hinted: {}, extra: false, late: false, reveal: false, ms: 0, since: Date.now(), msg: ['start'] };
 
   const cid = (k, i) => k * N + ((i % N) + N) % N;
   function el(tag, a, parent) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; }
   const pt = (r, deg) => { const a = deg * Math.PI / 180; return [CX + r * Math.sin(a), CY - r * Math.cos(a)]; };
   const fmt = ms => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
-  const over = () => st.solved || st.lost;
+  // lost = ran out of lives (final for the streak and the shared result); extra = keeps playing anyway;
+  // late = finished after losing; reveal = chose to see the solution.
+  const over = () => st.solved || st.late || st.reveal || (st.lost && !st.extra);
   function say(key, arg, kind) {
     st.msg = [key, arg, kind];
     const v = T()[key];
@@ -266,7 +284,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
   function save() {
     const notes = {}; for (const id in st.notes) notes[id] = [...st.notes[id]];
-    store.set(st.key, { val: st.val, notes, hinted: st.hinted, solved: st.solved, lost: st.lost, mistakes: st.mistakes, hints: st.hints, ms: elapsed() });
+    store.set(st.key, { val: st.val, notes, hinted: st.hinted, solved: st.solved, lost: st.lost, extra: st.extra, late: st.late, reveal: st.reveal, mistakes: st.mistakes, hints: st.hints, ms: elapsed() });
   }
   function shiftKey(key, d) { return new Date(AN.parseKey(key) + d * 86400000).toISOString().slice(0, 10); }
   function streak() {
@@ -313,7 +331,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
           fill, stroke: isWrong ? 'var(--bad)' : isSel ? 'var(--accent)' : st.why.has(id) ? 'var(--whyline)' : 'var(--ink)',
           'stroke-width': isSel || isWrong ? 4 : st.why.has(id) ? 3 : 1.2 }, g);
         const m = pt((r0 + r1) / 2, th);
-        const v = value(id) || (st.lost ? p.sol[id] : 0);
+        const v = value(id) || (st.reveal ? p.sol[id] : 0);
         if (isWrong) el('text', { x: m[0], y: m[1] + 10, 'text-anchor': 'middle', 'font-family': 'var(--display)', 'font-weight': 700, 'font-size': 28,
           fill: 'var(--bad)', 'text-decoration': 'line-through', 'pointer-events': 'none' }, g).textContent = st.wrong.n;
         else if (v) el('text', { x: m[0], y: m[1] + 10, 'text-anchor': 'middle', 'font-family': 'var(--display)', 'font-weight': given || st.hinted[id] ? 700 : 500, 'font-size': 28,
@@ -326,7 +344,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
       }
     }
     const left = C - p.giv.length - Object.keys(st.val).length;
-    $('progress').textContent = st.solved ? t.completed : st.lost ? t.lostShort : t.left(left);
+    $('progress').textContent = st.solved ? t.completed : st.late ? t.completedLate : st.lost && !st.extra ? t.lostShort : t.left(left);
     renderLives();
     renderPad();
     const hb = $('hintbtn'); hb.textContent = t.hintBtn(MAX_HINTS - st.hints); hb.disabled = st.hints >= MAX_HINTS;
@@ -351,7 +369,11 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     const t = T(), s = streak(), lvl = t[st.p.level], box = $('result');
     box.classList.toggle('lost', st.lost);
     $('sTime').textContent = fmt(st.ms); $('sStreak').textContent = s; $('sSolved').textContent = solvedCount();
-    if (st.lost) {
+    $('lostActions').hidden = !(st.lost && !st.late && !st.reveal);
+    if (st.late) {
+      $('rtitle').textContent = t.lateTitle;
+      $('shareText').textContent = t.shareLate(st.p.number, lvl, st.mistakes);
+    } else if (st.lost) {
       $('rtitle').textContent = t.lostTitle;
       $('shareText').textContent = t.shareLost(st.p.number, lvl);
     } else {
@@ -364,9 +386,9 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   function end(kind, firstTime) {
     if (firstTime) {
       st.ms = elapsed();
-      track(`${kind === 'win' ? 'resuelto' : 'perdido'}/${st.p.level}`);
+      track(`${kind === 'win' ? 'resuelto' : kind === 'late' ? 'terminado-sin-vidas' : 'perdido'}/${st.p.level}`);
     }
-    if (kind === 'win') st.solved = true; else st.lost = true;
+    if (kind === 'win') st.solved = true; else if (kind === 'late') { st.late = true; st.extra = false; } else st.lost = true;
     st.firstEnd = firstTime; st.sel = null; st.wrong = null; st.glow = null; st.why = new Set(); save();
     $('playarea').hidden = true;
     $('result').hidden = false;
@@ -428,7 +450,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   }
   function place(id, v) {
     st.val[id] = v; tidyNotes(id, v);
-    if (Object.keys(st.val).length === C - st.p.giv.length) { end('win', true); return true; }
+    if (Object.keys(st.val).length === C - st.p.giv.length) { const late = st.lost; end(late ? 'late' : 'win', true); if (late) say('lateMsg'); return true; }
     return false;
   }
   function enter(n) {
@@ -447,6 +469,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     }
     st.mistakes++;
     st.wrong = { id, n };   // stays in red until the player changes that piece
+    if (st.lost) { draw(); save(); say('wrongExtra', st.mistakes, 'bad'); return; }   // playing on without lives
     if (st.mistakes >= LIVES()) { end('lose', true); say('lostMsg', null, 'bad'); return; }
     draw(); save();
     say('wrongNum', LIVES() - st.mistakes, 'bad');
@@ -501,6 +524,13 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     } catch (e) { fallback(); }
   });
 
+  // After losing: keep playing (doesn't count as solved) or see the solution.
+  $('keepgoing').addEventListener('click', () => {
+    st.extra = true; st.since = Date.now(); save();
+    $('result').hidden = true; $('playarea').hidden = false;
+    draw(); say('extraOn', null, 'bad');
+  });
+  $('reveal').addEventListener('click', () => { st.reveal = true; st.extra = false; save(); renderResult(); draw(); say('revealMsg'); });
   $('helpbtn').addEventListener('click', () => { const h = $('help'); h.open = !h.open; if (h.open) h.scrollIntoView({ block: 'nearest' }); });
   $('prev').addEventListener('click', () => load(shiftKey(st.key, -1)));
   $('next').addEventListener('click', () => load(shiftKey(st.key, 1)));
@@ -541,7 +571,7 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     const notes = {}; for (const id in (saved.notes || {})) notes[id] = new Set(saved.notes[id]);
     const hinted = {}; for (const id in (saved.hinted || {})) if (val[id] !== undefined) hinted[id] = saved.hinted[id];
     Object.assign(st, { key, p, val, notes, hinted, sel: null, focus: null, wrong: null, glow: null, why: new Set(),
-      solved: !!saved.solved, lost: !!saved.lost, firstEnd: false, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
+      solved: !!saved.solved, lost: !!saved.lost, extra: !!saved.extra, late: !!saved.late, reveal: !!saved.reveal, firstEnd: false, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
       ms: saved.ms || 0, since: Date.now() });
     header();
     $('prev').disabled = AN.parseKey(key) <= AN.LAUNCH;
@@ -550,7 +580,9 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     $('timer').textContent = fmt(st.ms);
     say(Object.keys(st.val).length ? 'resume' : 'start');
     if (st.solved) end('win', false);
-    else if (st.lost) { end('lose', false); say('lostMsg', null, 'bad'); }
+    else if (st.late) { end('late', false); say('lateMsg'); }
+    else if (st.lost && st.extra && !st.reveal) { draw(); say('extraOn', null, 'bad'); }
+    else if (st.lost) { end('lose', false); say(st.reveal ? 'revealMsg' : 'lostMsg', null, st.reveal ? undefined : 'bad'); }
     else draw();
   }
 

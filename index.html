@@ -626,7 +626,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       tut1Wrong: n => `El ${n} ya está en el anillo. Busca el que falta.`,
       tut1Right: '¡Eso es! Era el único número que faltaba.',
       tut2Title: 'Regla 2: ni iguales ni seguidos',
-      tut2Text: 'Los trozos que se tocan no pueden tener el mismo número ni números seguidos. En azul, los trozos que toca el seleccionado. ¿Qué número va en él?',
+      tut2Text: 'Los trozos que se tocan no pueden tener el mismo número ni números seguidos. Los anillos están desplazados como ladrillos: en azul, los 6 trozos que toca el seleccionado (2 a los lados y 2 en cada anillo vecino). ¿Qué número va en él?',
       tut2Ring: n => `El ${n} ya está en este anillo.`,
       tut2Nb: a => `Este trozo toca un ${a}, así que no puede llevar ${a - 1}, ${a} ni ${a + 1}.`,
       tut2Right: '¡Eso es! El 7 y el 8 ya están en el anillo, el 3 quita el 2, el 3 y el 4, y el 6 quita el 5, el 6 y el 7. Solo queda el 1.',
@@ -701,7 +701,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       tut1Wrong: n => `The ${n} is already in the ring. Find the missing one.`,
       tut1Right: 'That’s it! It was the only number missing.',
       tut2Title: 'Rule 2: no equal or consecutive numbers',
-      tut2Text: 'Touching pieces can’t hold the same number or consecutive numbers. The pieces the selected one touches are in blue. Which number goes in it?',
+      tut2Text: 'Touching pieces can’t hold the same number or consecutive numbers. The rings are offset like bricks: in blue, the 6 pieces the selected one touches (2 beside it and 2 in each neighbouring ring). Which number goes in it?',
       tut2Ring: n => `The ${n} is already in this ring.`,
       tut2Nb: a => `This piece touches a ${a}, so it can’t hold ${a - 1}, ${a} or ${a + 1}.`,
       tut2Right: 'That’s it! The 7 and 8 are already in the ring, the 3 rules out 2, 3 and 4, and the 6 rules out 5, 6 and 7. Only the 1 is left.',
@@ -1160,8 +1160,9 @@ if (typeof module !== 'undefined') module.exports = AN;
   // Shown once to players who have never solved a puzzle; it can be reopened from "How to play".
   const TUT = [
     { ring: [1, 3, 5, 7, 2, 4, 6, 8], target: 5, answer: 4 },
-    // outer ring 0–7, inner ring 8–15 (offset half a piece); target outer 0 touches outer 7 and 1, inner 15 and 8
-    { cells: { 7: 3, 3: 8, 5: 7, 8: 6 }, target: 0, answer: 1, nb: [7, 1, 15, 8] },
+    // three rings with real ids (0–23); the target sits in the middle ring, so all 6 neighbours show:
+    // 15 and 9 beside it, 0 and 1 in the outer ring, 23 and 16 in the inner one.
+    { cells: { 1: 3, 16: 6, 11: 8, 13: 7 }, target: 8, answer: 1, nb: NB[8] },
     // a real board (puzzle nº 1) with 3 gaps: pieces 1 and 5 share the outer ring (1 and 6 missing), so the
     // neighbours decide which goes where; piece 19 is alone in its ring.
     { board: [7,1,5,8,3,6,2,4,4,7,3,5,1,8,6,2,2,5,7,3,6,1,4,8,7,3,5,1,8,6,2,4], gaps: [1, 5, 19] },
@@ -1208,8 +1209,7 @@ if (typeof module !== 'undefined') module.exports = AN;
     }
     if (S.ring) S.ring.forEach((v, i) => piece(i, 145, 80, 45 * i, i === S.target ? 0 : v));
     else {
-      for (let i = 0; i < 8; i++) piece(i, 145, 95, 45 * i, S.cells[i]);
-      for (let i = 0; i < 8; i++) piece(8 + i, 95, 45, 45 * i + 22.5, S.cells[8 + i]);
+      for (let k = 0; k < 3; k++) for (let i = 0; i < 8; i++) piece(k * 8 + i, 145 - k * 40, 105 - k * 40, 45 * i + 22.5 * k, S.cells[k * 8 + i]);
     }
   }
   function renderTut() {

@@ -257,6 +257,11 @@ const AN = (function () {
     expert: { max: 35, ok: h => h >= 15, open: 3 },
   };
   const DAYLEVEL = ['expert', 'easy', 'easy', 'medium', 'medium', 'hard', 'hard'];
+  // Weekly curves that apply from a given date on (newest first). Dates before every entry use DAYLEVEL,
+  // so past puzzles never change. 15 Oct 2026: gentler launch weeks (Mon–Thu easy, Fri–Sun medium).
+  const SCHEDULE = [
+    { from: '2026-10-15', days: ['medium', 'easy', 'easy', 'easy', 'easy', 'medium', 'medium'] },
+  ];
   // Start from a minimal (usually very hard) puzzle and add givens back until it fits the level.
   function tune(rng, p, L) {
     let giv = [...p.giv];
@@ -296,9 +301,12 @@ const AN = (function () {
     }
     return last;
   }
-  function levelOf(key) { return DAYLEVEL[new Date(parseKey(key)).getUTCDay()]; }
+  function levelOf(key) {
+    const s = SCHEDULE.find(x => key >= x.from);
+    return (s ? s.days : DAYLEVEL)[new Date(parseKey(key)).getUTCDay()];
+  }
   function daily(key) {
-    const t = parseKey(key), level = DAYLEVEL[new Date(t).getUTCDay()];
+    const t = parseKey(key), level = levelOf(key);
     const q = generate(Number(key.replace(/-/g, '')), level);
     return { sol: q.sol, giv: q.giv, level, trials: q.h, number: Math.round((t - LAUNCH) / 86400000) + 1, dateKey: key };
   }

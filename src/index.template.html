@@ -103,6 +103,16 @@ h1 { white-space: nowrap; }
 .archlist .lv.hard { border-color: var(--hint); color: var(--hint); }
 .archlist .lv.expert { border-color: var(--bad); color: var(--bad); }
 .empty { color: var(--muted); }
+.tut { position: fixed; inset: 0; background: rgba(15, 19, 23, .55); display: grid; place-items: center; padding: 16px; z-index: 10; overflow-y: auto; }
+.tutbox:focus { outline: none; }
+.tutbox { background: var(--bg); border-radius: 14px; padding: 18px 16px; width: 100%; max-width: 440px; display: grid; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.tuthead { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px; }
+.tuthead button { padding: 6px 12px; font-size: 14px; }
+.tutbox h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 20px; line-height: 1.25; }
+.tutbox p { margin: 0; }
+#tutBoard { width: 100%; max-width: 260px; height: auto; display: block; margin: 0 auto; }
+#tutPad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.status.good { border-color: var(--good); color: var(--good); }
 </style>
 
 <div class="wrap">
@@ -125,6 +135,7 @@ h1 { white-space: nowrap; }
       <li data-t="r3"></li>
     </ol>
     <p data-t="rhelp"></p>
+    <p><button id="tutOpen" data-t="tutOpen"></button></p>
   </details>
 
   <section class="archive" id="archive" hidden>
@@ -181,14 +192,26 @@ h1 { white-space: nowrap; }
   </div>
 </div>
 
+<div class="tut" id="tut" hidden role="dialog" aria-modal="true" aria-labelledby="tutTitle">
+  <div class="tutbox" tabindex="-1">
+    <div class="tuthead"><span id="tutStep"></span><button id="tutSkip" data-t="tutSkip"></button></div>
+    <h2 id="tutTitle"></h2>
+    <p id="tutText"></p>
+    <svg id="tutBoard" viewBox="0 0 300 300" aria-hidden="true"></svg>
+    <div class="pad" id="tutPad"></div>
+    <div class="status" id="tutMsg" role="status" aria-live="polite"></div>
+    <div class="row" id="tutActions"></div>
+  </div>
+</div>
+
 <script>
 /*CORE*/
 
 (function () {
   const { N, K, C, NB } = AN;
   const MAX_HINTS = 3;
-  // 3 lives on easy and medium days, 5 on hard and very hard days (Fri–Sun), where a slip is more likely.
-  const LIVES = () => (st.p && (st.p.level === 'hard' || st.p.level === 'expert')) ? 5 : 3;
+  // 3 lives on easy days (Mon–Thu), 5 on the harder Fri–Sun puzzles, where a slip is more likely.
+  const LIVES = () => (st.p && st.p.level !== 'easy') ? 5 : 3;
   const NS = 'http://www.w3.org/2000/svg', CX = 300, CY = 300, R = 290, WD = 59;
   const $ = id => document.getElementById(id);
   const svg = $('board'), statusEl = $('status');
@@ -206,7 +229,7 @@ h1 { white-space: nowrap; }
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
       r3: 'Tienes 3 vidas (5 los viernes, sábados y domingos): cada número equivocado resta una y las notas no cuentan. Si las pierdes todas puedes terminarlo igualmente, pero ese día no contará como resuelto.',
-      rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil el lunes y cada vez más difícil hasta el domingo. En Archivo puedes jugar los días anteriores, en modo normal o clásico (sin avisos de error).',
+      rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil de lunes a jueves y algo más difícil de viernes a domingo. En Archivo puedes jugar los días anteriores, en modo normal o clásico (sin avisos de error).',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
       easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil',
@@ -258,13 +281,28 @@ h1 { white-space: nowrap; }
       classicRight: '¡Correcto!', del2: 'Borrar',
       shareClassic: (n, lvl, t) => `Ringoku nº ${n} · ${lvl} · modo clásico\n✅ Resuelto en ${t}, sin ayudas`,
       fixed: v => `Número fijo ${v}`, yours: v => `Tu número ${v}`, empty: 'Trozo vacío',
+      tutOpen: 'Ver el tutorial', tutSkip: 'Saltar', tutStepN: (i, n) => `${i} de ${n}`,
+      tut1Title: 'Regla 1: en cada anillo, del 1 al 8',
+      tut1Text: 'Cada anillo tiene 8 trozos y lleva los números del 1 al 8, sin repetir. ¿Qué número falta en este?',
+      tut1Wrong: n => `El ${n} ya está en el anillo. Busca el que falta.`,
+      tut1Right: '¡Eso es! Era el único número que faltaba.',
+      tut2Title: 'Regla 2: ni iguales ni seguidos',
+      tut2Text: 'Los trozos que se tocan no pueden tener el mismo número ni números seguidos. En azul, los trozos que toca el seleccionado. ¿Qué número va en él?',
+      tut2Ring: n => `El ${n} ya está en este anillo.`,
+      tut2Nb: a => `Este trozo toca un ${a}, así que no puede llevar ${a - 1}, ${a} ni ${a + 1}.`,
+      tut2Right: '¡Eso es! El 7 y el 8 ya están en el anillo, el 3 quita el 2, el 3 y el 4, y el 6 quita el 5, el 6 y el 7. Solo queda el 1.',
+      tut3Title: '¡Ya sabes jugar!',
+      tut3Text: 'Cada día hay un puzzle nuevo: fácil de lunes a jueves y algo más difícil de viernes a domingo. Al tocar un trozo, el teclado tacha los números que ya están en su anillo. Si te atascas, pulsa Pista.',
+      tut3Medium: 'El de hoy es algo más difícil. Si es tu primera vez, mejor empieza con uno fácil.',
+      tutNext: 'Siguiente', playToday: 'Jugar el de hoy', playEasy: 'Empezar con uno fácil',
+      practiceMsg: 'Puzzle fácil de práctica: no cuenta para la racha. Cuando quieras, pulsa «Ir al de hoy».',
     },
     en: {
       howto: 'How to play', rules: 'Rules',
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
       r3: 'You have 3 lives (5 on Friday, Saturday and Sunday): each wrong number costs one, and notes don’t count. If you lose them all you can still finish the puzzle, but it won’t count as solved that day.',
-      rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy on Monday and harder each day until Sunday. In Archive you can play previous days, in normal or classic mode (no mistake warnings).',
+      rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy Monday to Thursday, a little harder Friday to Sunday. In Archive you can play previous days, in normal or classic mode (no mistake warnings).',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
       easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',
@@ -315,6 +353,21 @@ h1 { white-space: nowrap; }
       classicRight: 'Correct!', del2: 'Clear',
       shareClassic: (n, lvl, t) => `Ringoku #${n} · ${lvl} · classic mode\n✅ Solved in ${t}, no help`,
       fixed: v => `Given number ${v}`, yours: v => `Your number ${v}`, empty: 'Empty piece',
+      tutOpen: 'Show the tutorial', tutSkip: 'Skip', tutStepN: (i, n) => `${i} of ${n}`,
+      tut1Title: 'Rule 1: each ring holds 1 to 8',
+      tut1Text: 'Each ring has 8 pieces and holds the numbers 1 to 8, with no repeats. Which number is missing from this one?',
+      tut1Wrong: n => `The ${n} is already in the ring. Find the missing one.`,
+      tut1Right: 'That’s it! It was the only number missing.',
+      tut2Title: 'Rule 2: no equal or consecutive numbers',
+      tut2Text: 'Touching pieces can’t hold the same number or consecutive numbers. The pieces the selected one touches are in blue. Which number goes in it?',
+      tut2Ring: n => `The ${n} is already in this ring.`,
+      tut2Nb: a => `This piece touches a ${a}, so it can’t hold ${a - 1}, ${a} or ${a + 1}.`,
+      tut2Right: 'That’s it! The 7 and 8 are already in the ring, the 3 rules out 2, 3 and 4, and the 6 rules out 5, 6 and 7. Only the 1 is left.',
+      tut3Title: 'You’re ready to play!',
+      tut3Text: 'There’s a new puzzle every day: easy Monday to Thursday, a little harder Friday to Sunday. When you tap a piece, the keypad crosses out the numbers already in its ring. If you get stuck, tap Hint.',
+      tut3Medium: 'Today’s is a little harder. If it’s your first time, start with an easy one.',
+      tutNext: 'Next', playToday: 'Play today’s puzzle', playEasy: 'Start with an easy one',
+      practiceMsg: 'Easy practice puzzle: it doesn’t count for your streak. Tap “Go to today” whenever you like.',
     },
   };
   let lang = store.get('lang');
@@ -672,6 +725,7 @@ h1 { white-space: nowrap; }
     svg.setAttribute('aria-label', t.board);
     document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
     toggleLabels();
+    if (!$('tut').hidden) renderTut();
     if (st.p) {
       header();
       if (over()) renderResult();
@@ -756,10 +810,101 @@ h1 { white-space: nowrap; }
     if ([2, 3, 7, 14, 30].includes(n)) sendEvent(`retencion/dias-${n}`);
   }
 
-  $('help').open = !store.get('help');
+  // Tutorial: two tiny boards that teach the two rules by doing, then an easy practice puzzle on harder days.
+  // Shown once to players who have never solved a puzzle; it can be reopened from "How to play".
+  const TUT = [
+    { ring: [1, 3, 5, 7, 2, 4, 6, 8], target: 5, answer: 4 },
+    // outer ring 0–7, inner ring 8–15 (offset half a piece); target outer 0 touches outer 7 and 1, inner 15 and 8
+    { cells: { 7: 3, 3: 8, 5: 7, 8: 6 }, target: 0, answer: 1, nb: [7, 1, 15, 8] },
+  ];
+  const tut = { step: 0, done: false, flash: null };
+  function sector(parent, r1, r0, th, attrs) {
+    const P = (r, deg) => { const a = deg * Math.PI / 180; return [150 + r * Math.sin(a), 150 - r * Math.cos(a)]; };
+    const a = P(r1, th - 22.5), b = P(r1, th + 22.5), c = P(r0, th + 22.5), d = P(r0, th - 22.5);
+    el('path', { d: `M${a[0]} ${a[1]} A${r1} ${r1} 0 0 1 ${b[0]} ${b[1]} L${c[0]} ${c[1]} A${r0} ${r0} 0 0 0 ${d[0]} ${d[1]} Z`, ...attrs }, parent);
+    return P((r0 + r1) / 2, th);
+  }
+  function tutText(parent, m, v, color) {
+    el('text', { x: m[0], y: m[1] + 9, 'text-anchor': 'middle', 'font-family': 'var(--display)', 'font-weight': 700, 'font-size': 26, fill: color }, parent).textContent = v;
+  }
+  function drawTut() {
+    const b = $('tutBoard'); b.textContent = '';
+    const S = TUT[tut.step]; b.toggleAttribute('hidden', !S); if (!S) return;
+    const piece = (id, r1, r0, th, v) => {
+      const isT = id === S.target;
+      const fill = isT ? 'var(--paper)' : tut.flash === id ? 'var(--badbg)' : S.nb && S.nb.includes(id) ? 'var(--nb)' : 'var(--tint)';
+      const m = sector(b, r1, r0, th, { fill, stroke: isT && !tut.done ? 'var(--accent)' : tut.flash === id ? 'var(--bad)' : 'var(--ink)', 'stroke-width': isT && !tut.done || tut.flash === id ? 4 : 1.2 });
+      const shown = isT && tut.done ? S.answer : v;
+      if (shown) tutText(b, m, shown, isT ? 'var(--good)' : 'var(--ink)');
+    };
+    if (S.ring) S.ring.forEach((v, i) => piece(i, 145, 80, 45 * i, i === S.target ? 0 : v));
+    else {
+      for (let i = 0; i < 8; i++) piece(i, 145, 95, 45 * i, S.cells[i]);
+      for (let i = 0; i < 8; i++) piece(8 + i, 95, 45, 45 * i + 22.5, S.cells[8 + i]);
+    }
+  }
+  function renderTut() {
+    const t = T(), S = TUT[tut.step], last = tut.step === TUT.length;
+    $('tutStep').textContent = t.tutStepN(tut.step + 1, TUT.length + 1);
+    $('tutTitle').textContent = t[last ? 'tut3Title' : `tut${tut.step + 1}Title`];
+    $('tutText').textContent = last ? t.tut3Text + (AN.levelOf(TODAY) !== 'easy' ? ' ' + t.tut3Medium : '') : t[`tut${tut.step + 1}Text`];
+    $('tutPad').hidden = last; $('tutMsg').hidden = last;
+    if (!tut.msg) { $('tutMsg').textContent = ''; $('tutMsg').className = 'status'; }
+    else { const [k, a, kind] = tut.msg; $('tutMsg').textContent = typeof t[k] === 'function' ? t[k](a) : t[k]; $('tutMsg').className = 'status ' + kind; }
+    const acts = $('tutActions'); acts.textContent = '';
+    const btn = (label, primary, fn) => { const x = document.createElement('button'); x.textContent = label; if (primary) x.className = 'primary'; x.addEventListener('click', fn); acts.appendChild(x); return x; };
+    if (!last && tut.done) btn(t.tutNext, true, () => { tut.step++; tut.done = false; tut.msg = null; tut.flash = null; renderTut(); }).focus();
+    if (last) {
+      if (AN.levelOf(TODAY) !== 'easy') { btn(t.playEasy, true, () => closeTut('practica', true)).focus(); btn(t.playToday, false, () => closeTut('fin')); }
+      else btn(t.playToday, true, () => closeTut('fin')).focus();
+    }
+    drawTut();
+  }
+  function tutPick(v) {
+    const S = TUT[tut.step]; if (!S || tut.done) return;
+    tut.flash = null;
+    if (v === S.answer) { tut.done = true; tut.msg = [tut.step ? 'tut2Right' : 'tut1Right', null, 'good']; }
+    else if (S.ring) { tut.flash = S.ring.indexOf(v); tut.msg = ['tut1Wrong', v, 'bad']; }
+    else {
+      const holder = +Object.keys(S.cells).find(id => S.cells[id] === v && !S.nb.includes(+id));
+      const nb = S.nb.find(id => S.cells[id] && Math.abs(S.cells[id] - v) <= 1);
+      if (nb !== undefined) { tut.flash = nb; tut.msg = ['tut2Nb', S.cells[nb], 'bad']; }
+      else { tut.flash = holder; tut.msg = ['tut2Ring', v, 'bad']; }
+    }
+    renderTut();
+  }
+  for (let v = 1; v <= 8; v++) { const x = document.createElement('button'); x.textContent = v; x.addEventListener('click', () => tutPick(v)); $('tutPad').appendChild(x); }
+  function openTut() {
+    Object.assign(tut, { step: 0, done: false, msg: null, flash: null });
+    $('tut').hidden = false; renderTut(); track('tutorial/inicio');
+    document.querySelector('.tutbox').focus();
+  }
+  function closeTut(how, practice = false) {
+    $('tut').hidden = true; store.set('tut', 1); track('tutorial/' + how);
+    if (practice) startPractice();
+  }
+  // The most recent easy past puzzle the player hasn't solved yet (archive puzzles never count for the streak).
+  function startPractice() {
+    let pick = null;
+    for (let k = shiftKey(TODAY, -1); AN.parseKey(k) >= AN.LAUNCH; k = shiftKey(k, -1)) {
+      if (AN.levelOf(k) !== 'easy') continue;
+      const s = store.get(k);
+      if (!(s && (s.solved || s.lost))) { pick = k; break; }
+      if (!pick) pick = k;
+    }
+    if (!pick) return;
+    load(pick); say('practiceMsg', null, 'tip');
+  }
+  $('tutSkip').addEventListener('click', () => closeTut('saltado'));
+  $('tutOpen').addEventListener('click', openTut);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('tut').hidden) closeTut('saltado'); });
+
+  const firstTime = !store.get('tut') && solvedCount() === 0;
+  $('help').open = !store.get('help') && !firstTime;
   store.set('help', 1);
   applyLang();
   load(TODAY);
   retention();
+  if (firstTime) openTut();
 })();
 </script>

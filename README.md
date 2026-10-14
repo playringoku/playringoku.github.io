@@ -9,7 +9,11 @@ Un pasatiempo de lógica circular con un puzzle nuevo cada día. Disponible en e
 
 Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino (los anillos están desplazados medio trozo, como ladrillos): 6 en los dos anillos centrales y 4 en el exterior y el interior.
 
-**Vidas y pistas:** hay 3 vidas de lunes a jueves y 5 de viernes a domingo (difícil y muy difícil). Al quedarse sin vidas se puede seguir jugando hasta terminarlo o ver la solución, pero ese día cuenta como no resuelto; cada número equivocado resta una y a la tercera se pierde el puzzle del día (se muestra la solución y la racha vuelve a cero). Las notas no cuentan. Hay 3 pistas por puzzle: cada una revela el siguiente trozo que se puede deducir con lo que hay en el tablero (`AN.hint` en `src/anillos-core.js`). El resultado para compartir indica vidas y pistas usadas, y un puzzle sin fallos ni pistas cuenta como perfecto.
+**Vidas y pistas:** hay 3 vidas en los puzzles fáciles y 5 en los demás (ahora, de viernes a domingo). Al quedarse sin vidas se puede seguir jugando hasta terminarlo o ver la solución, pero ese día cuenta como no resuelto; cada número equivocado resta una y a la tercera se pierde el puzzle del día (se muestra la solución y la racha vuelve a cero). Las notas no cuentan. Hay 3 pistas por puzzle: cada una revela el siguiente trozo que se puede deducir con lo que hay en el tablero (`AN.hint` en `src/anillos-core.js`). El resultado para compartir indica vidas y pistas usadas, y un puzzle sin fallos ni pistas cuenta como perfecto.
+
+## Tutorial
+
+La primera vez que entra alguien que aún no ha resuelto ningún puzzle se abre un tutorial de 3 pasos: un anillo donde falta un número (regla 1) y un minitablero de dos anillos donde solo cabe el 1 (regla 2), con explicación de cada fallo. Si el puzzle de hoy no es fácil, al final propone empezar con un puzzle fácil anterior de práctica (del archivo, no cuenta para la racha). Se puede volver a abrir desde «Cómo se juega». Eventos de GoatCounter: `tutorial/inicio`, `tutorial/fin`, `tutorial/practica`, `tutorial/saltado`.
 
 ## Archivo
 
@@ -18,7 +22,7 @@ El botón «Archivo» muestra todos los puzzles anteriores. Se pueden jugar en m
 ## Cómo funciona el puzzle diario
 
 - La página genera el puzzle a partir de la fecha. La misma fecha produce siempre el mismo puzzle, así que todo el mundo juega el mismo ese día. No hay servidor.
-- La dificultad depende del día de la semana:
+- La dificultad depende del día de la semana. **Desde el 15 de octubre de 2026, mientras la gente aprende a jugar, la semana es más suave: fácil de lunes a jueves y medio de viernes a domingo** (`SCHEDULE` en `src/anillos-core.js`; para volver a la curva completa, añade otra entrada con fecha de inicio al principio de `SCHEDULE`, y los días anteriores no cambian). La curva completa, que se usó hasta el 14 de octubre, es:
   - Lunes y martes, fácil: se resuelve solo con deducciones sencillas y siempre hay varias jugadas a la vista.
   - Miércoles y jueves, medio: tampoco hace falta probar nada, pero hay pocas jugadas disponibles a la vez.
   - Viernes y sábado, difícil: hacen falta algunos razonamientos cortos del tipo «si aquí fuera un 3…».

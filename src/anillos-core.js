@@ -258,9 +258,9 @@ const AN = (function () {
   };
   const DAYLEVEL = ['expert', 'easy', 'easy', 'medium', 'medium', 'hard', 'hard'];
   // Weekly curves that apply from a given date on (newest first). Dates before every entry use DAYLEVEL,
-  // so past puzzles never change. 15 Oct 2026: gentler launch weeks (Mon–Thu easy, Fri–Sun medium).
+  // so past puzzles never change. 15 Oct 2026: gentler launch weeks (Mon–Thu easy, Fri–Sat medium, Sun hard).
   const SCHEDULE = [
-    { from: '2026-10-15', days: ['medium', 'easy', 'easy', 'easy', 'easy', 'medium', 'medium'] },
+    { from: '2026-10-15', days: ['hard', 'easy', 'easy', 'easy', 'easy', 'medium', 'medium'] },
   ];
   // Start from a minimal (usually very hard) puzzle and add givens back until it fits the level.
   function tune(rng, p, L) {

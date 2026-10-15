@@ -22,7 +22,7 @@ El botón «Archivo» muestra todos los puzzles anteriores. Se pueden jugar en m
 ## Cómo funciona el puzzle diario
 
 - La página genera el puzzle a partir de la fecha. La misma fecha produce siempre el mismo puzzle, así que todo el mundo juega el mismo ese día. No hay servidor.
-- La dificultad depende del día de la semana. **Desde el 15 de octubre de 2026, mientras la gente aprende a jugar, la semana es más suave: fácil de lunes a jueves y medio de viernes a domingo** (`SCHEDULE` en `src/anillos-core.js`; para volver a la curva completa, añade otra entrada con fecha de inicio al principio de `SCHEDULE`, y los días anteriores no cambian). La curva completa, que se usó hasta el 14 de octubre, es:
+- La dificultad depende del día de la semana. **Desde el 15 de octubre de 2026, mientras la gente aprende a jugar, la semana es más suave: fácil de lunes a jueves, medio el viernes y el sábado, y difícil el domingo** (`SCHEDULE` en `src/anillos-core.js`; para volver a la curva completa, añade otra entrada con fecha de inicio al principio de `SCHEDULE`, y los días anteriores no cambian). La curva completa, que se usó hasta el 14 de octubre, es:
   - Lunes y martes, fácil: se resuelve solo con deducciones sencillas y siempre hay varias jugadas a la vista.
   - Miércoles y jueves, medio: tampoco hace falta probar nada, pero hay pocas jugadas disponibles a la vez.
   - Viernes y sábado, difícil: hacen falta algunos razonamientos cortos del tipo «si aquí fuera un 3…».

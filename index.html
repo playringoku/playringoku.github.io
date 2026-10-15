@@ -489,9 +489,9 @@ const AN = (function () {
   };
   const DAYLEVEL = ['expert', 'easy', 'easy', 'medium', 'medium', 'hard', 'hard'];
   // Weekly curves that apply from a given date on (newest first). Dates before every entry use DAYLEVEL,
-  // so past puzzles never change. 15 Oct 2026: gentler launch weeks (Mon–Thu easy, Fri–Sun medium).
+  // so past puzzles never change. 15 Oct 2026: gentler launch weeks (Mon–Thu easy, Fri–Sat medium, Sun hard).
   const SCHEDULE = [
-    { from: '2026-10-15', days: ['medium', 'easy', 'easy', 'easy', 'easy', 'medium', 'medium'] },
+    { from: '2026-10-15', days: ['hard', 'easy', 'easy', 'easy', 'easy', 'medium', 'medium'] },
   ];
   // Start from a minimal (usually very hard) puzzle and add givens back until it fits the level.
   function tune(rng, p, L) {
@@ -568,7 +568,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       r1: 'Cada anillo lleva los números del 1 al 8, sin repetir.',
       r2: 'Dos trozos que se tocan nunca llevan el mismo número ni números seguidos: un 4 no puede tocar ni un 3, ni un 4, ni un 5.',
       r3: 'Tienes 3 vidas (5 los viernes, sábados y domingos): cada número equivocado resta una y las notas no cuentan. Si las pierdes todas puedes terminarlo igualmente, pero ese día no contará como resuelto.',
-      rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil de lunes a jueves y algo más difícil de viernes a domingo. En Archivo puedes jugar los días anteriores, en modo normal o clásico (sin avisos de error).',
+      rhelp: 'Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino: 6 en los anillos centrales y 4 en el exterior y el interior. Al tocar un trozo se resaltan en azul los que toca y en el teclado se tachan los números que ya están en su anillo. Usa Notas para apuntar posibilidades. Si te atascas, Pista te muestra el siguiente trozo que se puede deducir y marca en amarillo los trozos en que se basa (3 por puzzle). Los números puestos por una pista quedan en color mostaza: tócalos para volver a ver por qué. Hay un puzzle nuevo cada día: fácil de lunes a jueves, medio el viernes y el sábado, y difícil el domingo. En Archivo puedes jugar los días anteriores, en modo normal o clásico (sin avisos de error).',
       prev: 'Día anterior', next: 'Día siguiente', board: 'Tablero circular',
       number: n => `Ringoku nº ${n}`, today: 'Hoy, ', dateLocale: 'es-ES',
       easy: 'Fácil', medium: 'Medio', hard: 'Difícil', expert: 'Muy difícil',
@@ -636,7 +636,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       tut3Good: 'Bien. Sigue con otro hueco.',
       tut3Right: '¡Resuelto! Así es un Ringoku, solo que con más huecos.',
       tut4Title: '¡Ya sabes jugar!',
-      tut4Text: 'Cada día hay un puzzle nuevo: fácil de lunes a jueves y algo más difícil de viernes a domingo. Al tocar un trozo, el teclado tacha los números que ya están en su anillo. Si te atascas, pulsa Pista.',
+      tut4Text: 'Cada día hay un puzzle nuevo: fácil de lunes a jueves, medio el viernes y el sábado, y difícil el domingo. Al tocar un trozo, el teclado tacha los números que ya están en su anillo. Si te atascas, pulsa Pista.',
       tutNext: 'Siguiente', playToday: 'Jugar el de hoy',
     },
     en: {
@@ -644,7 +644,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       r1: 'Each ring holds the numbers 1 to 8, with no repeats.',
       r2: 'Two touching pieces never hold the same or consecutive numbers: a 4 can’t touch a 3, a 4 or a 5.',
       r3: 'You have 3 lives (5 on Friday, Saturday and Sunday): each wrong number costs one, and notes don’t count. If you lose them all you can still finish the puzzle, but it won’t count as solved that day.',
-      rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy Monday to Thursday, a little harder Friday to Sunday. In Archive you can play previous days, in normal or classic mode (no mistake warnings).',
+      rhelp: 'Each piece touches the 2 beside it and 2 in each neighbouring ring: 6 in the middle rings, 4 in the outer and inner rings. Tapping a piece highlights the pieces it touches in blue and crosses out on the keypad the numbers already in its ring. Use Notes to pencil in candidates. If you get stuck, Hint fills in the next piece that can be deduced and outlines in yellow the pieces it relies on (3 per puzzle). Numbers placed by a hint stay mustard-coloured: tap them to see why again. A new puzzle every day: easy Monday to Thursday, medium on Friday and Saturday, and hard on Sunday. In Archive you can play previous days, in normal or classic mode (no mistake warnings).',
       prev: 'Previous day', next: 'Next day', board: 'Circular board',
       number: n => `Ringoku #${n}`, today: 'Today, ', dateLocale: 'en-GB',
       easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',
@@ -711,7 +711,7 @@ if (typeof module !== 'undefined') module.exports = AN;
       tut3Good: 'Good. Now another gap.',
       tut3Right: 'Solved! That’s a Ringoku, just with more gaps.',
       tut4Title: 'You’re ready to play!',
-      tut4Text: 'There’s a new puzzle every day: easy Monday to Thursday, a little harder Friday to Sunday. When you tap a piece, the keypad crosses out the numbers already in its ring. If you get stuck, tap Hint.',
+      tut4Text: 'There’s a new puzzle every day: easy Monday to Thursday, medium on Friday and Saturday, and hard on Sunday. When you tap a piece, the keypad crosses out the numbers already in its ring. If you get stuck, tap Hint.',
       tutNext: 'Next', playToday: 'Play today’s puzzle',
     },
   };

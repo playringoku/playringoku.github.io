@@ -5,7 +5,7 @@ Un pasatiempo de lógica circular con un puzzle nuevo cada día. Disponible en e
 ## Reglas
 
 1. Cada anillo lleva los números del 1 al 8, sin repetir.
-2. Dos trozos que se tocan nunca llevan el mismo número ni números seguidos (un 4 no puede tocar ni un 3, ni un 4, ni un 5).
+2. Dos trozos que se tocan nunca llevan el mismo número ni números seguidos (un 4 no puede tocar ni un 3, ni un 4, ni un 5). El 1 y el 8 no cuentan como seguidos: los números no dan la vuelta.
 
 Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino (los anillos están desplazados medio trozo, como ladrillos): 6 en los dos anillos centrales y 4 en el exterior y el interior.
 

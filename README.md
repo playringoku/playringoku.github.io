@@ -9,7 +9,7 @@ Un pasatiempo de lógica circular con un puzzle nuevo cada día. Disponible en e
 
 Cada trozo toca a los 2 de sus lados y a 2 en cada anillo vecino (los anillos están desplazados medio trozo, como ladrillos): 6 en los dos anillos centrales y 4 en el exterior y el interior.
 
-**Vidas y pistas:** hay 3 vidas en los puzzles fáciles y 5 en los demás (ahora, de viernes a domingo). Al quedarse sin vidas se puede seguir jugando hasta terminarlo o ver la solución, pero ese día cuenta como no resuelto; cada número equivocado resta una y a la tercera se pierde el puzzle del día (se muestra la solución y la racha vuelve a cero). Las notas no cuentan. Hay 3 pistas por puzzle: cada una revela el siguiente trozo que se puede deducir con lo que hay en el tablero (`AN.hint` en `src/anillos-core.js`). El resultado para compartir indica vidas y pistas usadas, y un puzzle sin fallos ni pistas cuenta como perfecto.
+**Vidas y pistas:** hay 3 vidas en los puzzles fáciles y medios, y 5 en los difíciles y muy difíciles (ahora, solo el domingo). Al quedarse sin vidas se puede seguir jugando hasta terminarlo o ver la solución, pero ese día cuenta como no resuelto; cada número equivocado resta una y a la tercera se pierde el puzzle del día (se muestra la solución y la racha vuelve a cero). Las notas no cuentan. Hay 3 pistas por puzzle: cada una revela el siguiente trozo que se puede deducir con lo que hay en el tablero (`AN.hint` en `src/anillos-core.js`). El resultado para compartir indica vidas y pistas usadas, y un puzzle sin fallos ni pistas cuenta como perfecto.
 
 ## Tutorial
 
